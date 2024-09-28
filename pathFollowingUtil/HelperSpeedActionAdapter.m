@@ -387,12 +387,19 @@ classdef HelperSpeedActionAdapter < matlab.System
             interface = [...
                 Input("in1", Data), ... % Time step
                 Input("in2", Data), ... % Route finished
-                Input("in3", Data), ... % Agent State
-                Input("in4", Message), ... % Actors runtime
-                Input("in5", Message), ... % Speed action
-                Input("in6", Message), ... % All Actor Attributes
-                Output("out1", Data),...
-                Output("out2", Data)];
+                Input("in3", Data), ... % Actors runtime
+                Input("in4", Message), ... % Speed action
+                Input("in5", Message), ... % All Actor Attributes
+                Output("out1", Data)];
+            % interface = [...
+            %     Input("in1", Data), ... % Time step
+            %     Input("in2", Data), ... % Route finished
+            %     Input("in3", Data), ... % Agent State
+            %     Input("in4", Message), ... % Actors runtime
+            %     Input("in5", Message), ... % Speed action
+            %     Input("in6", Message), ... % All Actor Attributes
+            %     Output("out1", Data),...
+            %     Output("out2", Data)];
         end
         
     end
