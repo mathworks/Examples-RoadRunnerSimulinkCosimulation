@@ -15,6 +15,7 @@
 - handsOn02_changeParameters.mlx: MATLABからRoadRunnerの変数を変更する方法を体験。変数を変更し、forループで繰り返し実行することでシナリオのバリエーション実行が可能。
 - handsOn03_simulinkCosimulation.mlx: シンプルなSimulinkモデルとのcosimulationを体験。毎ステップごとに固定値進むだけの簡易的な移動モデルをSimulinkモデルで作成し、RoadRunner Sceanrioとcosimulation.
 - handsOn04_sensorSimulaiton.mlx: 固定距離を移動するモデルにセンサモデルを追加。LiDARセンサをはじめに、カメラやミリ波センサを車両に追加し、その計測値の可視化を体験。
+- handsOn04-2_sensorSimulaitonObserver.mlx: 各センサモデルの取得と可視化をObserver(R2024b以降)により実現。車両はRoadRunner Scenarioで設計した通りに動きセンサデータを取得。
 - handsOn05_simulaitonPathFollowing.mlx: RoadRunner ScenarioReaderブロックより車速や軌跡情報を取得し、作成した軌跡通りに車両が追従するSimulinkモデルを体験。2輪モデルの車両ダイナミクスをStanley制御でコントロールするモードも実行し、それぞれの軌跡の差を可視化。
 
 <!--- If you mention any trademarks, all MathWorks&reg; (including MATLAB&reg;)  and 3rd party trademarks&trade; need to be correctly marked the first time they are prominently used in each file (including the README.MD).  --->
