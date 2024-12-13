@@ -371,5 +371,13 @@ classdef HelperReferencePoseOnPath < matlab.System
             % Return only allowed simulation mode in System block dialog
             simMode = "Interpreted execution";
         end
+        function sts = getSampleTimeImpl(obj)
+            if obj.timeStep == -1
+                sts = createSampleTime(obj,'ErrorOnPropagation','Controllable');
+            else
+                sts = createSampleTime(obj,'Type','Discrete',...
+                 'SampleTime', obj.timeStep);
+            end
+        end
     end
 end
