@@ -13,6 +13,9 @@ classdef HelperReferencePoseOnPath < matlab.System
         
         vehicleOnPath = true; % vehicleOnPath: if vehicle doesn't follow path exactly, set this false
         long_offset = 0;
+
+        debugFig = false;
+        searchIndx = 10; %現在の最近傍を検索するセクションの範囲
     end
 
     % Pre-computed constants
@@ -33,6 +36,12 @@ classdef HelperReferencePoseOnPath < matlab.System
         % line segment (only enable if vehicleOnPath == false)
         lineSegment;
         lineSegment_sq;
+
+        % figure axis for debug draw;
+        ax;
+        h_repPts;
+        h_vehicle;
+        h_tire;
     end
 
     methods(Access = protected)
@@ -65,6 +74,17 @@ classdef HelperReferencePoseOnPath < matlab.System
                     obj.lineSegment_sq = sum(obj.lineSegment.^2, 2);
                 end
 
+                if obj.debugFig
+                    figure;
+                    obj.ax = gca;
+                    plot(waypoints(:,1), waypoints(:,2), "b-", 'Parent', obj.ax);
+                    hold on;
+                    axis equal;
+                    obj.h_repPts = plot(waypoints(1,1), waypoints(1,2), 'g*', 'MarkerSize', 12, 'Parent', obj.ax);
+                    obj.h_vehicle = plot(waypoints(1:2,1), waypoints(1:2,2), '-r.', 'MarkerSize', 12, 'Parent', obj.ax);
+                    % obj.h_tire = plot(waypoints(1:2,1), waypoints(1:2,2), '-m.', 'MarkerSize', 12, 'Parent', obj.ax);
+                end
+
                 return
             end
 
@@ -75,6 +95,17 @@ classdef HelperReferencePoseOnPath < matlab.System
             % Update the pose and curvature for next time step
             obj.RefPosePrev = RefPointOnPath;
             obj.RefCurvaturePrev = RefCurvature;
+
+            if obj.debugFig
+                obj.h_repPts.XData = RefPointOnPath(1);
+                obj.h_repPts.YData = RefPointOnPath(2);
+
+                obj.h_vehicle.XData = [currPose(1), currPose(1)+obj.long_offset*cos(currPose(3))];
+                obj.h_vehicle.YData = [currPose(2), currPose(2)+obj.long_offset*sin(currPose(3))];
+
+                % obj.h_tire.XData = [currPose(1), currPose(1)+obj.dirLength*cos(currPose(3))];
+                % obj.h_vehicle.YData = [currPose(2), currPose(2)+obj.dirLength*sin(currPose(3))];
+            end
         end
 
         % Generate curvatures from the trajectory
@@ -207,19 +238,14 @@ classdef HelperReferencePoseOnPath < matlab.System
                 %車両が軌跡から外れる場合、最短のセクション（waypontsとwaypointsの間の線分）を探索する
                 PointXY_raw = currPosePrev(1:2);
                 offset = eul2rotm([currPosePrev(3), 0, currPosePrev(5)], "ZYX") * [obj.long_offset; 0; 0];
+                offset = [obj.long_offset*cos(currPosePrev(3)), obj.long_offset*sin(currPosePrev(3))];
 
                 % offset = eul2rotm([currPosePrev(3), 0, currPosePrev(5)], "ZYX") * [speed * obj.timeStep; 0; 0];
-                PointXY = PointXY_raw + offset(1:2)';
-                % degbug for offset
-                % figure;
-                % plot(waypoints(:,1), waypoints(:,2)); hold on;
-                % axis equal
-                % plot(PointXY_raw(1), PointXY_raw(2), "o");
-                % plot(PointXY(1), PointXY(2), "^");
+                PointXY = PointXY_raw + offset(1:2);
 
                 %現在のセクションより近傍のセクションのみ探索
-                lowerIdx = max(obj.SectionStartIndex - 3, 1);
-                upperIdx = min(obj.SectionStartIndex + 3, size(obj.lineSegment, 1));
+                lowerIdx = max(obj.SectionStartIndex - obj.searchIndx, 1);
+                upperIdx = min(obj.SectionStartIndex + obj.searchIndx, size(obj.lineSegment, 1));
 
                 pts2SegmentStartPts = PointXY - waypoints(lowerIdx:upperIdx,1:2);
 
@@ -240,21 +266,21 @@ classdef HelperReferencePoseOnPath < matlab.System
                 [minDist, minIdx] = min(distances);
                 obj.SectionStartIndex = lowerIdx - 1 + minIdx;
 
-                weight1 = 1-t(minIdx); %現在値から次のセクションまで距離の割合　次のセクションの重み
-                weight2 = t(minIdx);%現在セクションから現在地までの距離の割合　現在セクションの重み
+                weight2 = 1-t(minIdx); %referencePoseから次のセクションまで距離の割合　次のセクションの重み
+                weight1 = t(minIdx);%現在セクションからreferencePoseまでの距離の割合　現在セクションの重み
 
                 currPosePrev = waypoints(obj.SectionStartIndex,:);
 
                 %debug for section
-                % figure;
-                % plot(waypoints(:,1), waypoints(:,2)); hold on;
-                % axis equal
-                % plot(PointXY_raw(1), PointXY_raw(2), "o");
-                % plot(PointXY(1), PointXY(2), "^");
-                % plot(R(minIdx, 1), R(minIdx, 2), "x", "Color", "r");
-                % plot(waypoints(obj.SectionStartIndex, 1), waypoints(obj.SectionStartIndex, 2), "x", "Color", "g");
-                % plot(waypoints(obj.SectionStartIndex+1, 1), waypoints(obj.SectionStartIndex+1, 2), "x", "Color", "b");
-                % plot([R(minIdx, 1);PointXY(1)], [R(minIdx, 2); PointXY(2)], "Color", "r");
+            %     figure;
+            %     plot(waypoints(:,1), waypoints(:,2)); hold on;
+            %     axis equal
+            %     plot(PointXY_raw(1), PointXY_raw(2), "o");
+            %     plot(PointXY(1), PointXY(2), "^");
+            %     plot(R(minIdx, 1), R(minIdx, 2), "x", "Color", "r");
+            %     plot(waypoints(obj.SectionStartIndex, 1), waypoints(obj.SectionStartIndex, 2), "x", "Color", "g");
+            %     plot(waypoints(obj.SectionStartIndex+1, 1), waypoints(obj.SectionStartIndex+1, 2), "x", "Color", "b");
+            %     plot([R(minIdx, 1);PointXY(1)], [R(minIdx, 2); PointXY(2)], "Color", "r");
             end
             
             % % Normalized distance between current position and section starting point
