@@ -4,8 +4,6 @@
 
 日本語による説明が英語説明の後に続きます。
 
-[![View <File Exchange Title> on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/####-file-exchange-title)  
-<!-- Add this icon to the README if this repo also appears on File Exchange via the "Connect to GitHub" feature -->
 This repository provides sample use cases for integrating RoadRunner Scenario with MATLAB&reg;/Simulink&reg;.  
 For an explanation of how to use these files, please refer to the second half of [this webinar archive (Japanese)](https://jp.mathworks.com/videos/super-practicalmodel-based-development-and-simulation-including-3d-driving-environment-1723108106305.html). It walks you through how to execute them. (Due to time constraints, not all the content is fully explained.)  
 Also note that it is assumed you already understand the basic operations of RoadRunner and RoadRunner Scenario. Please watch the first half of the webinar at the above link as well.
