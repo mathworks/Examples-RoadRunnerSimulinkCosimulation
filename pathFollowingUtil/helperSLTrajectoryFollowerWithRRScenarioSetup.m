@@ -56,7 +56,7 @@ end
 assignin('base','tau',             0.5);     % Time constant for longitudinal dynamics 1/s/(tau*s+1)
 assignin('base','time_gap',        1.5);     % Time gap               (s)
 assignin('base','default_spacing', 10);      % Default spacing        (m)
-assignin('base','max_ac',          2);       % Maximum acceleration   (m/s^2)
+assignin('base','max_ac',          3);       % Maximum acceleration   (m/s^2)
 assignin('base','min_ac',          -3);      % Minimum acceleration   (m/s^2)
 assignin('base','max_steer',       0.26);    % Maximum steering       (rad)
 assignin('base','min_steer',       -0.26);   % Minimum steering       (rad) 
@@ -66,31 +66,56 @@ assignin('base','tau2', 0.07);               % Longitudinal time constant (brake
 assignin('base','max_dc', 10);               % Maximum deceleration   (m/s^2)
 
 %% Dynamics modeling parameters
+lr = 1.3050;
 assignin('base','m',  1575);                 % Total mass of vehicle                          (kg)
 assignin('base','Iz', 2100);                 % Yaw moment of inertia of vehicle               (m*N*s^2)
 assignin('base','Cf', 19000);                % Cornering stiffness of front tires             (N/rad)
 assignin('base','Cr', 33000);                % Cornering stiffness of rear tires              (N/rad)
 assignin('base','lf', 1.5130);               % Longitudinal distance from c.g. to front tires (m)
-assignin('base','lr', 1.3050);               % Longitudinal distance from c.g. to rear tires  (m)
+assignin('base','lr', lr);               % Longitudinal distance from c.g. to rear tires  (m)
 assignin('base', 'steeringGain', 0.8);       % Steering gain
 assignin('base', 'steerLimit', 30);     % Max steering limit
 assignin('base', 'steerGear', 18);     % steering gear ratio
 
 %% Create Simulink bus
-helperCreateBusForTrajectoryFollowerWithRRScenario
-helperCreatePathTargetBus(nvp.MaxPathPoints)
+helperCreateBusForTrajectoryFollowerWithRRScenario();
+helperCreatePathTargetBus(nvp.MaxPathPoints);
 
+if exist("egoInitialPose", "var")
+    [egoInitialPoseCG, egoInitialPoseRear] = egoVehicleInfoForRear(egoInitialPose, lr);
+    assignin('base', 'egoInitialPoseCG', egoInitialPoseCG);
+    assignin('base', 'egoInitialPoseRear', egoInitialPoseRear);
+end
+
+end
+function [egoInitialPoseCG, egoInitialPoseRear] = egoVehicleInfoForRear(egoInitialPose, lr)
+    egoInitialPoseRear = Simulink.Bus.createMATLABStruct("BusVehicleInfo");
+
+    %[x, y, yaw_deg, z, pitch_deg]
+    poseMatrix = eul2rotm(deg2rad([egoInitialPose.Yaw, egoInitialPose.Pitch, egoInitialPose.Roll]), "ZYX");
+    positionRear = egoInitialPose.Position + transpose(poseMatrix * [-lr; 0; 0]);
+
+    poseRear = [positionRear(1), positionRear(2), egoInitialPose.Yaw, positionRear(3), egoInitialPose.Pitch];
+    egoInitialPoseRear.CurrVelocity = norm(egoInitialPose.Velocity);
+    egoInitialPoseRear.CurrYawRate = egoInitialPose.AngularVelocity(3);
+    egoInitialPoseRear.Direction = 1;
+    egoInitialPoseRear.CurrSteer = 0;
+    egoInitialPoseRear.CurrPose = poseRear;
+
+    poseCG = [egoInitialPose.Position(1), egoInitialPose.Position(2), egoInitialPose.Yaw, egoInitialPose.Position(3), egoInitialPose.Pitch];
+    egoInitialPoseCG = egoInitialPoseRear;
+    egoInitialPoseCG.CurrPose = poseCG;
 end
 function egoVehDyn = egoVehicleDynamicsParamsFromRR(ego, egoActor)
 % Ego pose for vehicle dynamics from RoadRunner Scenario.
-egoVehDyn.X0  =  ego.Position(2); % (m)
-egoVehDyn.Y0  =  ego.Position(1); % (m)
+egoVehDyn.X0  =  ego.Position(1); % (m)
+egoVehDyn.Y0  =  -ego.Position(2); % (m)
 egoVehDyn.Z0  = -ego.Position(3); % (m)
-egoVehDyn.VX0 =  ego.Velocity(2); % (m/s)
-egoVehDyn.VY0 =  -ego.Velocity(1); % (m/s)
+egoVehDyn.VX0 =  ego.Velocity(1); % (m/s)
+egoVehDyn.VY0 =  -ego.Velocity(2); % (m/s)
 
 % Adjust sign and unit of yaw
-egoVehDyn.Yaw0 = -deg2rad(ego.Yaw-90); % (rad)
+egoVehDyn.Yaw0 = -deg2rad(ego.Yaw); % (rad)
 egoVehDyn.Pitch0 = -deg2rad(ego.Pitch); % (rad)
 egoVehDyn.Roll0 = deg2rad(ego.Roll); % (rad)
 
@@ -125,7 +150,7 @@ if nnz(idx) == 1
         c1.w c2.w c3.w c4.w];
 
     position = pose(1:3,4)';
-    heading = rotm2eul(pose(1:3, 1:3)); % The default order for Euler angle rotations is "ZYX"
+    heading = rotm2eul(pose(1:3, 1:3), "ZYX"); % The default order for Euler angle rotations is "ZYX"
 
     % Adjust yaw due to difference in the actor's starting orientation
     yaw = rad2deg(heading(1))+90;
@@ -139,8 +164,8 @@ if nnz(idx) == 1
         'ActorID', double(actorID), ...
         'Position', position, ...         % m
         'Velocity', velocity, ...         % m/s
-        'Roll', rad2deg(heading(3)), ...  % deg
-        'Pitch', rad2deg(heading(2)), ... % deg
+        'Roll', rad2deg(heading(2)), ...  % deg 補正
+        'Pitch', -rad2deg(heading(3)), ... % deg 正の時下向き、負の時上向き
         'Yaw', yaw, ...                   % deg
         'AngularVelocity', [0 0 0]);      % deg/s
 else

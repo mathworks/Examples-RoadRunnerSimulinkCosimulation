@@ -75,7 +75,7 @@ classdef HelperReferencePoseOnPath < matlab.System
                 end
 
                 if obj.debugFig
-                    figure;
+                    figure; set(gcf, "Visible", "on");
                     obj.ax = gca;
                     plot(waypoints(:,1), waypoints(:,2), "b-", 'Parent', obj.ax);
                     hold on;
@@ -131,7 +131,7 @@ classdef HelperReferencePoseOnPath < matlab.System
             % add z value and pitch information
             refPose(:,4) = interp1(cumDistance,trajectory(:,3),cumDistanceResample);
             refPitch = getPitch(obj,refPose,interpNumTrajPoints);
-            refPose(:,5) = refPitch;
+            refPose(:,5) = refPitch * -1;
 
             % Calculating curvature
             [~,~,~,refCurvature] = smoothPathSpline(refPose(:,1:3), ones(interpNumTrajPoints,1),interpNumTrajPoints);
