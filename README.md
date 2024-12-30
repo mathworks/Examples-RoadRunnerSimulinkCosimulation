@@ -1,8 +1,50 @@
 # RoadRunner Scenario - Simulink HandsOn
-<!-- This is the "Title of the contribution" that was approved during the Community Contribution Review Process --> 
-
 [![View <File Exchange Title> on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/####-file-exchange-title)  
 <!-- Add this icon to the README if this repo also appears on File Exchange via the "Connect to GitHub" feature --> 
+
+日本語による説明が英語説明の後に続きます。
+<!-- This is the "Title of the contribution" that was approved during the Community Contribution Review Process -->
+ 
+[![View <File Exchange Title> on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/####-file-exchange-title)  
+<!-- Add this icon to the README if this repo also appears on File Exchange via the "Connect to GitHub" feature -->
+This repository provides sample use cases for integrating RoadRunner Scenario with MATLAB&reg;/Simulink&reg;.  
+For an explanation of how to use these files, please refer to the second half of [this webinar archive (Japanese)](https://jp.mathworks.com/videos/super-practicalmodel-based-development-and-simulation-including-3d-driving-environment-1723108106305.html). It walks you through how to execute them. (Due to time constraints, not all the content is fully explained.)  
+Also note that it is assumed you already understand the basic operations of RoadRunner and RoadRunner Scenario. Please watch the first half of the webinar at the above link as well.
+ 
+Below is a description of the main files:
+ 
+- **handsOn00_liveEditor_demo.mlx**: Experience the basic operations of Live Editor.  
+- **handsOn01_launchRR.mlx**: Learn how to launch and run RoadRunner from MATLAB.  
+- **handsOn02_changeParameters.mlx**: Learn how to change RoadRunner variables from MATLAB. By changing these variables and running a for-loop for repeated execution, you can run scenario variations.  
+- **handsOn03_simulinkCosimulation.mlx**: Experience co-simulation with a simple Simulink model. You will create a simple moving model in Simulink, which moves at a fixed distance every step, and co-simulate with RoadRunner Scenario.  
+- **handsOn04_sensorSimulaiton.mlx**: Add a sensor model to a model that moves a fixed distance. Start with a LiDAR sensor, then add a camera and millimeter-wave sensor to the vehicle and visualize the measurement data.  
+- **handsOn04_2_sensorSimulaitonObserver.mlx**: Obtain and visualize data from each sensor model using Observer (R2024b or later). The vehicle moves as designed in RoadRunner Scenario while sensor data is collected.  
+- **handsOn05_simulaitonPathFollowing.mlx**: Use the RoadRunner ScenarioReader block to obtain speed and trajectory information, and then experience a Simulink model in which the vehicle follows the created trajectory. Also try the mode where a bicycle vehicle dynamics model is controlled by Stanley control, and compare the difference in each trajectory.
+- **handsOn06_simulaitonPathFollowing14DoF.mlx: Use the RoadRunner ScenarioReader to obtain speed and trajectory information, and then experience a Simulink model in which the vehicle follows the cretaed trajectory. Alos try the mode where a 14 DOF full vehicle model (6 DOF for the vehicle body + 2  DOF × 4 tires) is controlled by Stanley control, and compare the difference in each trajectory. Compare in a scene and scenario that enables you to see effects such as tire saturation and road gradients, which cannot be represetnted by a bicycle model.
+
+## Setup
+### Execution Steps
+1. Create the RoadRunner project folder in advance.  
+2. Execute in order from `handsOn00*` through `handsOn05*`.  
+ 
+### Important Notes
+If HTTP_PROXY or HTTPS_PROXY environment variables for a proxy server are set, MATLAB may be unable to launch RoadRunner (i.e., RoadRunner function fails to connect MATLAB and RoadRunner).  
+In such cases, please remove the HTTP_PROXY/HTTPS_PROXY environment variable settings, restart, and try again.
+ 
+### Product Configuration (https://www.mathworks.com)
+Tested with MATLAB R2024a and RoadRunner R2024a.  
+MATLAB and RoadRunner versions must match. If you have installed different versions, please align them.
+- MATLAB
+- Simulink
+- Automated Driving Toolbox&trade;
+- Computer Vision Toolbox&trade; (required by Automated Driving Toolbox)
+- Image Processing Toolbox&trade; (required by Computer Vision Toolbox)
+- RoadRunner
+- RoadRunner Scenario
+- Vehicle Dynamics Blockset&trade; (only needed when running `handsOn05*`)
+ 
+<!-- This is the "Title of the contribution" that was approved during the Community Contribution Review Process --> 
+
 
 本リポジトリはRoadRunner ScenarioとMATLAB&reg;/Simulink&reg;を連携させるサンプルを提供しています。
 実際の使用方法についての解説は[ウェビナーのアーカイブ後半パート](https://jp.mathworks.com/videos/super-practicalmodel-based-development-and-simulation-including-3d-driving-environment-1723108106305.html)にて公開されていますので、ご視聴いただきながら実行してください。（時間の関係上、全てのコンテンツについて解説できてはおりません。）
@@ -17,6 +59,7 @@
 - handsOn04_sensorSimulaiton.mlx: 固定距離を移動するモデルにセンサモデルを追加。LiDARセンサをはじめに、カメラやミリ波センサを車両に追加し、その計測値の可視化を体験。
 - handsOn04_2_sensorSimulaitonObserver.mlx: 各センサモデルの取得と可視化をObserver(R2024b以降)により実現。車両はRoadRunner Scenarioで設計した通りに動きセンサデータを取得。
 - handsOn05_simulaitonPathFollowing.mlx: RoadRunner ScenarioReaderブロックより車速や軌跡情報を取得し、作成した軌跡通りに車両が追従するSimulinkモデルを体験。2輪モデルの車両ダイナミクスをStanley制御でコントロールするモードも実行し、それぞれの軌跡の差を可視化。
+- handsOn06_simulaitonPathFollowing14DoF.mlx: RoadRunner ScenarioReaderブロックより車速や軌跡情報を取得し、作成した軌跡通りに車両が追従するSimulinkモデルを体験。14自由度（車体6自由度＋タイヤ２自由度×4）車両ダイナミクスをStanley制御でコントロールするモードを実行し、それぞれの軌跡の差を可視化。2輪モデルでは表現できないタイヤの飽和領域や道路勾配の影響を可視化できるシーンで比較。
 
 <!--- If you mention any trademarks, all MathWorks&reg; (including MATLAB&reg;)  and 3rd party trademarks&trade; need to be correctly marked the first time they are prominently used in each file (including the README.MD).  --->
 <!--- Markdown supports the following HTML entities: © - &copy;  ® - &reg;  ™ - &trade;
@@ -51,7 +94,7 @@ To Run:
 --->
 
 ### 製品構成 (https://www.mathworks.com)
-MATLAB R2024a、RoadRunner R2024aでテストしています。
+MATLAB R2024b、RoadRunner R2024b(Update1以降)でテストしています。
 MATLABとRoadRunnerのversionは揃える必要があるため、異なるversionをインストールしている方はversionを揃えてください。
 - MATLAB
 - Simulink
