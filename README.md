@@ -4,7 +4,7 @@
 
 日本語による説明が英語説明の後に続きます。
 
-This repository provides sample use cases for integrating RoadRunner Scenario with MATLAB&reg;/Simulink&reg;.  
+This repository provides sample use cases for integrating RoadRunner Scenario with MATLAB&reg; & Simulink&reg;.  
 For an explanation of how to use these files, please refer to the second half of [this webinar archive (Japanese)](https://jp.mathworks.com/videos/super-practicalmodel-based-development-and-simulation-including-3d-driving-environment-1723108106305.html). It walks you through how to execute them. (Due to time constraints, not all the content is fully explained.)  
 Also note that it is assumed you already understand the basic operations of RoadRunner and RoadRunner Scenario. Please watch the first half of the webinar at the above link as well.
  
@@ -35,20 +35,20 @@ MATLAB and RoadRunner versions must match. If you have installed different versi
 - MATLAB
 - Simulink
 - Automated Driving Toolbox&trade;
-- Computer Vision Toolbox&trade (required by Automated Driving Toolbox)
-- Image Processing Toolbox&trade (required by Computer Vision Toolbox)
+- Computer Vision Toolbox&trade; (required by Automated Driving Toolbox)
+- Image Processing Toolbox&trade; (required by Computer Vision Toolbox)
 - RoadRunner
 - RoadRunner Scenario
-- Vehicle Dynamics Blockset&trade (only needed when running `handsOn05* and handsOn06*')
-- Simulink 3D Animation&trade (only needed when enabling 3D engine viewer in handsOn06*)
-- Simscape&trade (only needed when runnning handsOn07*)
-- Simscape Multibody&trade (only needed when runnning handsOn07*)
-- Stateflow&reg (only needed when runnning handsOn07*)
+- Vehicle Dynamics Blockset&trade; (only needed when running `handsOn05* and handsOn06*')
+- Simulink&reg; 3D Animation&trade; (only needed when enabling 3D engine viewer in handsOn06*)
+- Simscape&trade; (only needed when runnning handsOn07*)
+- Simscape Multibody&trade; (only needed when runnning handsOn07*)
+- Stateflow&reg; (only needed when runnning handsOn07*)
 
 <!-- This is the "Title of the contribution" that was approved during the Community Contribution Review Process --> 
 
 
-本リポジトリはRoadRunner ScenarioとMATLAB;/Simulink;を連携させるサンプルを提供しています。
+本リポジトリはRoadRunner ScenarioとMATLAB & Simulinkを連携させるサンプルを提供しています。
 実際の使用方法についての解説は[ウェビナーのアーカイブ後半パート](https://jp.mathworks.com/videos/super-practicalmodel-based-development-and-simulation-including-3d-driving-environment-1723108106305.html)にて公開されていますので、ご視聴いただきながら実行してください。（時間の関係上、全てのコンテンツについて解説できてはおりません。）
 また、RoadRunnerとRoadRunner Scenarioの基本的な操作を理解していることが前提になっています。上リンクのウェビナーの前半パートも合わせてご覧ください。
 
