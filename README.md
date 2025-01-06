@@ -17,12 +17,13 @@ Below is a description of the main files:
 - **handsOn04_sensorSimulaiton.mlx**: Add a sensor model to a model that moves a fixed distance. Start with a LiDAR sensor, then add a camera and millimeter-wave sensor to the vehicle and visualize the measurement data.  
 - **handsOn04_2_sensorSimulaitonObserver.mlx**: Obtain and visualize data from each sensor model using Observer (R2024b or later). The vehicle moves as designed in RoadRunner Scenario while sensor data is collected.  
 - **handsOn05_simulaitonPathFollowing.mlx**: Use the RoadRunner ScenarioReader block to obtain speed and trajectory information, and then experience a Simulink model in which the vehicle follows the created trajectory. Also try the mode where a bicycle vehicle dynamics model is controlled by Stanley control, and compare the difference in each trajectory.
-- **handsOn06_simulaitonPathFollowing14DoF.mlx**: Use the RoadRunner ScenarioReader to obtain speed and trajectory information, and then experience a Simulink model in which the vehicle follows the cretaed trajectory. Alos try the mode where a 14 DOF full vehicle model (6 DOF for the vehicle body + 2  DOF × 4 tires) is controlled by Stanley control, and compare the difference in each trajectory. Compare in a scene and scenario that enables you to see effects such as tire saturation and road gradients, which cannot be represetnted by a bicycle model.
+- **handsOn06_simulaitonPathFollowing14DoF.mlx**: Use the RoadRunner ScenarioReader to obtain speed and trajectory information, and then experience a Simulink model in which the vehicle follows the cretaed trajectory. Also try the mode where a 14 DOF full vehicle model (6 DOF for the vehicle body + 2  DOF × 4 tires) is controlled by Stanley control, and compare the difference in each trajectory. Compare in a scene and scenario that enables you to see effects such as tire saturation and road gradients, which cannot be represetnted by a bicycle model.
+- **handsOn07_simulaitonPathFollowingMultibody.mlx**: Use the RoadRunner ScenarioReader to obtain speed and trajectory information, and then experience a Simulink model in which the vehicle follows the cretaed trajectory. This is a sample that uses a Simscape Multibody model for vehicle dynamics.
 
 ## Setup
 ### Execution Steps
 1. Create the RoadRunner project folder in advance.  
-2. Execute in order from `handsOn00*` through `handsOn05*`.  
+2. Execute in order from `handsOn00*` through `handsOn07*`.  
  
 ### Important Notes
 If HTTP_PROXY or HTTPS_PROXY environment variables for a proxy server are set, MATLAB may be unable to launch RoadRunner (i.e., RoadRunner function fails to connect MATLAB and RoadRunner).  
@@ -34,13 +35,16 @@ MATLAB and RoadRunner versions must match. If you have installed different versi
 - MATLAB
 - Simulink
 - Automated Driving Toolbox&trade;
-- Computer Vision Toolbox&trade; (required by Automated Driving Toolbox)
-- Image Processing Toolbox&trade; (required by Computer Vision Toolbox)
+- Computer Vision Toolbox&trade (required by Automated Driving Toolbox)
+- Image Processing Toolbox&trade (required by Computer Vision Toolbox)
 - RoadRunner
 - RoadRunner Scenario
-- Vehicle Dynamics Blockset&trade; (only needed when running `handsOn05* and handsOn06*')
-- Simulink 3D Animation&trade; (only needed when enabling 3D engine viewer in handsOn06*)
- 
+- Vehicle Dynamics Blockset&trade (only needed when running `handsOn05* and handsOn06*')
+- Simulink 3D Animation&trade (only needed when enabling 3D engine viewer in handsOn06*)
+- Simscape&trade (only needed when runnning handsOn07*)
+- Simscape Multibody&trade (only needed when runnning handsOn07*)
+- Stateflow&reg (only needed when runnning handsOn07*)
+
 <!-- This is the "Title of the contribution" that was approved during the Community Contribution Review Process --> 
 
 
@@ -58,6 +62,7 @@ MATLAB and RoadRunner versions must match. If you have installed different versi
 - **handsOn04_2_sensorSimulaitonObserver.mlx**: 各センサモデルの取得と可視化をObserver(R2024b以降)により実現。車両はRoadRunner Scenarioで設計した通りに動きセンサデータを取得。
 - **handsOn05_simulaitonPathFollowing.mlx**: RoadRunner ScenarioReaderブロックより車速や軌跡情報を取得し、作成した軌跡通りに車両が追従するSimulinkモデルを体験。2輪モデルの車両ダイナミクスをStanley制御でコントロールするモードも実行し、それぞれの軌跡の差を可視化。
 - **handsOn06_simulaitonPathFollowing14DoF.mlx**: RoadRunner ScenarioReaderブロックより車速や軌跡情報を取得し、作成した軌跡通りに車両が追従するSimulinkモデルを体験。14自由度（車体6自由度＋タイヤ２自由度×4）車両ダイナミクスをStanley制御でコントロールするモードを実行し、それぞれの軌跡の差を可視化。2輪モデルでは表現できないタイヤの飽和領域や道路勾配の影響を可視化できるシーンで比較。
+- **handsOn07_simulaitonPathFollowingMultibody.mlx**: RoadRunner ScenarioReaderブロックより車速や軌跡情報を取得し、作成した軌跡通りに車両が追従するSimulinkモデルを体験。車両ダイナミクスとしてSimspace Multibodyのモデルを使用するサンプル。
 
 <!--- If you mention any trademarks, all MathWorks&reg; (including MATLAB&reg;)  and 3rd party trademarks&trade; need to be correctly marked the first time they are prominently used in each file (including the README.MD).  --->
 <!--- Markdown supports the following HTML entities: © - &copy;  ® - &reg;  ™ - &trade;
@@ -74,14 +79,12 @@ Please remember to delete all template related text that you are not using withi
 ## Setup
 ### 実行手順
 1．RoadRunnerのプロジェクトフォルダを事前に作成<br>
-2．handsOn00*からhandsOn05*まで順に実行<br>
-
+2．handsOn00*からhandsOn07*まで順に実行<br>
 
 ### 注意
 プロキシサーバーの環境変数（HTTP_PROXY、HTTPS_PROXY）設定によって、
 MATLABからRoadRunnerが起動できない場合があります。（roadrunner関数を使用した際にMATLABとRoadRunner間の通信が接続されない。）
 お手数ですが、プロキシサーバーの環境変数（HTTP_PROXY、HTTPS_PROXY）設定を削除し、再起動してからの実行をお願いします。
-
 
 <!---  
 To Run:
@@ -101,8 +104,11 @@ MATLABとRoadRunnerのversionは揃える必要があるため、異なるversio
 - Image Processing Toolbox; (Computer Vision Toolboxの前提)
 - RoadRunner
 - RoadRunner Scenario
-- Vehicle Dynamics Blockset; (handsOn05*, handsOn06*実行時のみ必要)
-- Simulink 3D Animation; (handsOn06*の詳細表示を有効にした際必要)
+- Vehicle Dynamics Blockset (handsOn05*, handsOn06*実行時のみ必要)
+- Simulink 3D Animation (handsOn06*の詳細表示を有効にした際必要)
+- Simscape (handsOn07*実行時のみ必要)
+- Simscape Multibody (handsOn07*実行時のみ必要)
+- Stateflow (handsOn07*実行時のみ必要)
 
 <!---
 ### MathWorks Products (https://www.mathworks.com)
