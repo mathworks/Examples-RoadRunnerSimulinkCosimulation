@@ -87,7 +87,155 @@ if exist("egoInitialPose", "var")
     assignin('base', 'egoInitialPoseRear', egoInitialPoseRear);
 end
 
+%% for multibody setting
+if exist("egoInitialPose", "var")
+    addpath(genpath('multibodyUtil'));
+    [VehicleData, Camera] = setupMultibodyVehicleSpec();
+    [InitVehicle, SceneData] = setMultibodyVehicleInitialPose(egoInitialPose, VehicleData);
+    assignin('base',"InitVehicle",InitVehicle);
+    assignin('base',"SceneData",SceneData);
+    assignin('base',"VehicleData",VehicleData);
+    assignin('base',"Camera",Camera);
 end
+end
+
+function [InitVehicle, SceneData] = setMultibodyVehicleInitialPose(egoInitialPose, VehicleData)
+
+    lf = evalin('base', 'lf');
+    % lr = evalin('base', 'lr');
+
+    rotMat = eul2rotm(deg2rad([egoInitialPose.Yaw, egoInitialPose.Pitch, egoInitialPose.Roll]), "ZYX");
+    positionFA = transpose(rotMat * [lf; 0; 0]) + egoInitialPose.Position;
+
+    % Defaults for vehicle initial position in World coordinate frame
+    InitVehicle.Vehicle.px = positionFA(1);  % m
+    InitVehicle.Vehicle.py = positionFA(2);  % m
+    InitVehicle.Vehicle.pz = positionFA(3);  % m
+    
+    % Defaults for vehicle initial translational velocity
+    % Represented in vehicle coordinates: 
+    %    +vx is forward, +vy is left, +vz is up in initial vehicle frame
+    InitVehicle.Vehicle.vx  = egoInitialPose.Velocity(1); %m/s
+    InitVehicle.Vehicle.vy  =  egoInitialPose.Velocity(2);  %m/s
+    InitVehicle.Vehicle.vz  =  egoInitialPose.Velocity(3);  %m/s
+    
+    % Defaults for vehicle initial orientation
+    % Represented in vehicle coordinates, yaw-pitch-roll applied intrinsically
+    InitVehicle.Vehicle.yaw   = deg2rad(egoInitialPose.Yaw);  % rad
+    InitVehicle.Vehicle.pitch = deg2rad(egoInitialPose.Pitch);  % rad
+    InitVehicle.Vehicle.roll  = deg2rad(egoInitialPose.Roll);  % rad
+    
+    % Default is flat road surface in x-y plane
+    % SceneData = evalin('base','SceneData');
+    SceneData.Reference.yaw   = 0 * pi/180;
+    SceneData.Reference.pitch = 0 * pi/180;
+    SceneData.Reference.roll  = 0 * pi/180;
+
+    % VehicleData = evalin('base', 'VehicleData');
+    
+    % Set initial position and speed of vehicle and wheels
+    InitVehicle.Wheel.wFL = InitVehicle.Vehicle.vx/VehicleData.TireDataF.param.DIMENSION.UNLOADED_RADIUS; %rad/s
+    InitVehicle.Wheel.wFR = InitVehicle.Vehicle.vx/VehicleData.TireDataF.param.DIMENSION.UNLOADED_RADIUS; %rad/s
+    InitVehicle.Wheel.wRL = InitVehicle.Vehicle.vx/VehicleData.TireDataR.param.DIMENSION.UNLOADED_RADIUS; %rad/s
+    InitVehicle.Wheel.wRR = InitVehicle.Vehicle.vx/VehicleData.TireDataR.param.DIMENSION.UNLOADED_RADIUS; %rad/s
+    
+    % Update structures in MATLAB workspace
+    assignin('base',"InitVehicle",InitVehicle)
+    assignin('base',"SceneData",SceneData)
+end
+
+function [VehicleData, Camera] = setupMultibodyVehicleSpec()
+    % Parameters for example sm_vehicle_2axle_heave_roll.slx
+    % Copyright 2021-2024 The MathWorks, Inc.
+    
+    m = evalin('base','m');                 % Total mass of vehicle                          (kg)
+    Iz = evalin('base','Iz');                 % Yaw moment of inertia of vehicle               (m*N*s^2)
+    Cf = evalin('base','Cf');                % Cornering stiffness of front tires             (N/rad)
+    Cr = evalin('base','Cr');                % Cornering stiffness of rear tires              (N/rad)
+    lf = evalin('base','lf');               % Longitudinal distance from c.g. to front tires (m)
+    lr = evalin('base','lr');               % Longitudinal distance from c.g. to rear tires  (m)
+    steeringGain = evalin('base', 'steeringGain');       % Steering gain
+    steerLimit = evalin('base', 'steerLimit');     % Max steering limit deg
+    steerGear = evalin('base', 'steerGear');     % steering gear ratio
+    % Vehicle body parameters
+    % Vehicle reference point is point directly between 
+    %         tire contact patches on front wheels
+    VehicleData.Body.FA = 0;               % m
+    VehicleData.Body.RA = -(lf+lr);              % m
+    VehicleData.Body.CG = [-lf 0 0]; % m
+    VehicleData.Body.Geometry = [1.25 0.9850 -0.2353]; % m
+    VehicleData.Body.Mass          = m;            % kg
+    VehicleData.Body.Inertias      = [600 3000 Iz]; % kg*m^2
+    VehicleData.Body.Color     = [0.4 0.6 1.0]; % RGB
+    VehicleData.Body.Color_2   = [0.87 0.57 0.14]; % RGB
+    VehicleData.Body.Opacity = 1.0;
+    
+    % Front suspension parameters
+    % Two degrees of freedom for axle (heave, roll), spin DOF for wheels
+    % Ackermann steering
+    VehicleData.SuspF.Heave.Stiffness = 40000;  % N/m
+    VehicleData.SuspF.Heave.Damping   = 3500;   % N/m
+    VehicleData.SuspF.Heave.EqPos     = -0.2;   % m
+    VehicleData.SuspF.Heave.Height    = 0.1647; % m
+    VehicleData.SuspF.Roll.Stiffness  = 66000;  % N*m/rad
+    VehicleData.SuspF.Roll.Damping    = 2050;   % N*m/(rad/s)
+    VehicleData.SuspF.Roll.Height     = 0.0647; % m
+    VehicleData.SuspF.Roll.EqPos      = 0;      % rad
+    
+    % Separation of wheels on this axle
+    VehicleData.SuspF.Track           = 1.6;    % m
+    
+    % Unsprung mass - radius and length for visualization only
+    VehicleData.SuspF.UnsprungMass.Mass = 95;         % kg
+    VehicleData.SuspF.UnsprungMass.Inertia = [1 1 1]; % kg*m^2
+    VehicleData.SuspF.UnsprungMass.Height = 0.355;    % m
+    VehicleData.SuspF.UnsprungMass.Radius = 0.1;      % m
+    VehicleData.SuspF.UnsprungMass.Length = 1.6;      % m
+    
+    % Hub height should be synchronized with tire parameters
+    VehicleData.TireDataF.filename = 'KT_MF_Tool_245_60_R16.tir';
+    VehicleData.TireDataF.param    = simscape.multibody.tirread(which(VehicleData.TireDataF.filename));
+    VehicleData.SuspF.Hub.Height   = VehicleData.TireDataF.param.DIMENSION.UNLOADED_RADIUS; % m
+    % Rim mass and inertia typically not part of .tir file
+    VehicleData.RimF.Mass          = 10;    % kg
+    VehicleData.RimF.Inertia       = [1 2]; % kg*m^2
+    
+    VehicleData.SuspF.SteerRatio = steerGear; % m
+    
+    % Rear suspension parameters
+    % Two degrees of freedom for axle (heave, roll), spin DOF for wheels
+    VehicleData.SuspR.Heave.Stiffness  = 50000;  % N/m
+    VehicleData.SuspR.Heave.Damping    = 3500;   % N/m
+    VehicleData.SuspR.Heave.EqPos      = -0.16;  % m
+    VehicleData.SuspR.Heave.Height     = 0.1647; % m
+    VehicleData.SuspR.Roll.Stiffness   = 27500;  % N*m/rad
+    VehicleData.SuspR.Roll.Damping     = 2050;   % N*m/(rad/s)
+    VehicleData.SuspR.Roll.Height      = 0.1147; % m
+    VehicleData.SuspR.Roll.EqPos      = 0;      % rad
+    
+    % Separation of wheels on this axle
+    VehicleData.SuspR.Track            = 1.6;    % m
+    
+    % Unsprung mass - radius and length for visualization only
+    VehicleData.SuspR.UnsprungMass.Mass    = 90;      % kg
+    VehicleData.SuspR.UnsprungMass.Inertia = [1 1 1]; % kg*m^2
+    VehicleData.SuspR.UnsprungMass.Height  = 0.355;   % m
+    VehicleData.SuspR.UnsprungMass.Length  = 1.6;     % m
+    VehicleData.SuspR.UnsprungMass.Radius  = 0.1;     % m
+    
+    % Hub height should be synchronized with tire parameters
+    VehicleData.TireDataR.filename = 'KT_MF_Tool_245_60_R16.tir';
+    VehicleData.TireDataR.param    = simscape.multibody.tirread(which(VehicleData.TireDataR.filename));
+    VehicleData.SuspR.Hub.Height   = VehicleData.TireDataF.param.DIMENSION.UNLOADED_RADIUS; % m
+    
+    % Rim mass and inertia typically not part of .tir file
+    VehicleData.RimR.Mass          = 10;    % kg
+    VehicleData.RimR.Inertia       = [1 2]; % kg
+    
+    %% Camera data
+    Camera =  sm_vehicle_camera_frames_car_3m;
+end
+
 function [egoInitialPoseCG, egoInitialPoseRear] = egoVehicleInfoForRear(egoInitialPose, lr)
     egoInitialPoseRear = Simulink.Bus.createMATLABStruct("BusVehicleInfo");
 

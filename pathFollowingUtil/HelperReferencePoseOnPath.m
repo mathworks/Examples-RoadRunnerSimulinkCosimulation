@@ -38,7 +38,7 @@ classdef HelperReferencePoseOnPath < matlab.System
         lineSegment_sq;
 
         % figure axis for debug draw;
-        ax;
+        ax = [];
         h_repPts;
         h_vehicle;
         h_tire;
@@ -74,8 +74,8 @@ classdef HelperReferencePoseOnPath < matlab.System
                     obj.lineSegment_sq = sum(obj.lineSegment.^2, 2);
                 end
 
-                if obj.debugFig
-                    figure; set(gcf, "Visible", "on");
+                if obj.debugFig && isempty(obj.ax)
+                    f_handle = figure; set(f_handle, "Visible", "on");
                     obj.ax = gca;
                     plot(waypoints(:,1), waypoints(:,2), "b-", 'Parent', obj.ax);
                     hold on;
