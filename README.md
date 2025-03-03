@@ -42,7 +42,7 @@ MATLAB and RoadRunner versions must match. If you have installed different versi
 - Vehicle Dynamics Blockset&trade; (only needed when running `handsOn05* and handsOn06*')
 - Simulink&reg; 3D Animation&trade; (only needed when enabling 3D engine viewer in handsOn06*)
 - Simscape&trade; (only needed when runnning handsOn07*)
-- Simscape Multibody&trade; (only needed when runnning handsOn07*)
+- Simscape&trade; Multibody&trade; (only needed when runnning handsOn07*)
 - Stateflow&reg; (only needed when runnning handsOn07*)
 
 <!-- This is the "Title of the contribution" that was approved during the Community Contribution Review Process --> 
