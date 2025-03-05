@@ -2,6 +2,9 @@
 [![View <File Exchange Title> on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/####-file-exchange-title)  
 <!-- Add this icon to the README if this repo also appears on File Exchange via the "Connect to GitHub" feature --> 
 
+![demo1](demo_images/20241231_vehicleModel_comparison2.gif)
+![demo2](demo_images/20240227_CRG_vehicleDynamics.gif)
+
 日本語による説明が英語説明の後に続きます。
 
 This repository provides sample use cases for integrating RoadRunner Scenario with MATLAB&reg; & Simulink&reg;.  
