@@ -12,10 +12,10 @@ classdef HelperReferencePoseOnPath < matlab.System
         timeStep = 0.01; % time step for distance calculation by speed
         
         vehicleOnPath = true; % vehicleOnPath: if vehicle doesn't follow path exactly, set this false
-        long_offset = 0;
+        long_offset = 0;% long_offset: longitudinal offset from input position to front axle. If input position is on front axle, it's 0. 
 
-        debugFig = false;
-        searchIndx = 10; %現在の最近傍を検索するセクションの範囲
+        debugFig = false; % debugFig: if true, debug figure whch show vehicle target position on path is visualized
+        searchIndx = 10; %Range of sections to search for the current nearest neighbor 現在の最近傍を検索するセクションの範囲
     end
 
     % Pre-computed constants
