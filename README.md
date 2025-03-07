@@ -11,7 +11,7 @@ This repository provides sample use cases for integrating RoadRunner Scenario wi
 For an explanation of how to use these files, please refer to the second half of [this webinar archive (Japanese)](https://jp.mathworks.com/videos/super-practicalmodel-based-development-and-simulation-including-3d-driving-environment-1723108106305.html). It walks you through how to execute them. (Due to time constraints, not all the content is fully explained.)  
 Also note that it is assumed you already understand the basic operations of RoadRunner and RoadRunner Scenario. Please watch the first half of the webinar at the above link as well.
  
-Below is a description of the main files:
+Below is a description of the main files (prefix "EN_" means English and "JP_" means Japanese):
  
 - **handsOn00_liveEditor_demo.mlx**: Experience the basic operations of Live Editor.  
 - **handsOn01_launchRR.mlx**: Learn how to launch and run RoadRunner from MATLAB.  
@@ -58,7 +58,7 @@ MATLAB and RoadRunner versions must match. If you have installed different versi
 また、RoadRunnerとRoadRunner Scenarioの基本的な操作を理解していることが前提になっています。上リンクのウェビナーの前半パートも合わせてご覧ください。
 
 
-それぞれの主なファイルの説明は下記の通りです。
+それぞれの主なファイルの説明は下記の通りです。(文頭のそれぞれEN_は英語、JP_は日本語で説明されているファイルです。)
 - **handsOn00_liveEditor_demo.mlx**: liveEditorの基本操作を体験
 - **handsOn01_launchRR.mlx**: RoadRunnerをMATLABから起動、実行する方法を体験
 - **handsOn02_changeParameters.mlx**: MATLABからRoadRunnerの変数を変更する方法を体験。変数を変更し、forループで繰り返し実行することでシナリオのバリエーション実行が可能。
