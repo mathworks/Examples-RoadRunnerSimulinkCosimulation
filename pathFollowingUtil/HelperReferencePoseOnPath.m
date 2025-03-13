@@ -16,6 +16,9 @@ classdef HelperReferencePoseOnPath < matlab.System
 
         debugFig = false; % debugFig: if true, debug figure whch show vehicle target position on path is visualized
         searchIndx = 10; %Range of sections to search for the current nearest neighbor 現在の最近傍を検索するセクションの範囲
+
+        numReferencePose = 1;%numReferencePose: default is 1, if this is increased, future trajectory is outputted
+        controlTimestep = 0.1;%controlTimestep: default is 0.1. time step for control loop
     end
 
     % Pre-computed constants
@@ -37,11 +40,15 @@ classdef HelperReferencePoseOnPath < matlab.System
         lineSegment;
         lineSegment_sq;
 
+        % cumsum distance of trajectory
+        cumDistanceTraj
+
         % figure axis for debug draw;
         ax = [];
         h_repPts;
         h_vehicle;
         h_tire;
+        h_futurePts;
     end
 
     methods(Access = protected)
@@ -74,14 +81,43 @@ classdef HelperReferencePoseOnPath < matlab.System
                     obj.lineSegment_sq = sum(obj.lineSegment.^2, 2);
                 end
 
+                            % if trajectory needs multiple output, add those output based
+                % on speed and timestep  
+                if obj.numReferencePose > 1
+                    distance_prediction = currentSpeed * obj.controlTimestep * obj.numReferencePose;
+                    dists = obj.cumDistanceTraj - obj.cumDistanceTraj(obj.SectionStartIndex) - distance_prediction;
+                    index_prediction = find(dists > 0, 1); % firt true means final points of prediction
+                    if isempty(index_prediction)
+                        index_prediction = numWaypoints-1;
+                    end
+    
+                    cumDist_future = [0, obj.cumDistanceTraj(obj.SectionStartIndex:index_prediction)];
+                    waypts_future = [currPose; waypoints(obj.SectionStartIndex:index_prediction, :)];
+                    curvature_future = [curvatures(1); curvatures(obj.SectionStartIndex:index_prediction, :)];
+
+                    [cumDist_future, waypts_future, curvature_future] = removeDuplicateRows(cumDist_future, waypts_future, curvature_future);
+
+                    traveled_dists = [0, currentSpeed * (1:obj.numReferencePose-1) * obj.controlTimestep];
+                    % Interpolate the postion
+                    RefPointOnPath = interp1(cumDist_future,waypts_future,traveled_dists,'linear','extrap');
+                    RefCurvature = interp1(cumDist_future,curvature_future,traveled_dists,'linear','extrap')';
+
+                    RefPointOnPath(:,[3, 5]) = rad2deg(RefPointOnPath(:,[3, 5]));
+                end
+
                 if obj.debugFig && isempty(obj.ax)
                     f_handle = figure; set(f_handle, "Visible", "on");
                     obj.ax = gca;
                     plot(waypoints(:,1), waypoints(:,2), "b-", 'Parent', obj.ax);
                     hold on;
-                    axis equal;
+                    % axis equal;
                     obj.h_repPts = plot(waypoints(1,1), waypoints(1,2), 'g*', 'MarkerSize', 12, 'Parent', obj.ax);
                     obj.h_vehicle = plot(waypoints(1:2,1), waypoints(1:2,2), '-r.', 'MarkerSize', 12, 'Parent', obj.ax);
+                    legend(obj.ax, ["trajectory", "ref pts", "vehicle pos"]);
+                    if obj.numReferencePose > 1
+                        obj.h_futurePts = plot(RefPointOnPath(:,1), RefPointOnPath(:,2), 'm*', 'MarkerSize', 6, 'Parent', obj.ax);
+                        legend(obj.ax, ["trajectory", "ref pts", "vehicle pos", "future ref pts"]);
+                    end
                     % obj.h_tire = plot(waypoints(1:2,1), waypoints(1:2,2), '-m.', 'MarkerSize', 12, 'Parent', obj.ax);
                 end
 
@@ -97,12 +133,16 @@ classdef HelperReferencePoseOnPath < matlab.System
             obj.RefCurvaturePrev = RefCurvature;
 
             if obj.debugFig
-                obj.h_repPts.XData = RefPointOnPath(1);
-                obj.h_repPts.YData = RefPointOnPath(2);
+                obj.h_repPts.XData = RefPointOnPath(1, 1);
+                obj.h_repPts.YData = RefPointOnPath(1, 2);
 
                 obj.h_vehicle.XData = [currPose(1), currPose(1)+obj.long_offset*cos(currPose(3))];
                 obj.h_vehicle.YData = [currPose(2), currPose(2)+obj.long_offset*sin(currPose(3))];
 
+                if obj.numReferencePose > 1
+                    obj.h_futurePts.XData = RefPointOnPath(:,1);
+                    obj.h_futurePts.YData = RefPointOnPath(:,2);
+                end
                 % obj.h_tire.XData = [currPose(1), currPose(1)+obj.dirLength*cos(currPose(3))];
                 % obj.h_vehicle.YData = [currPose(2), currPose(2)+obj.dirLength*sin(currPose(3))];
             end
@@ -115,7 +155,7 @@ classdef HelperReferencePoseOnPath < matlab.System
             trajectory = trajectory(uniqueId,:);
 
             % Interpolate based on distance
-            interpDistance = 3;
+            interpDistance = 1;
             cumDistance = [0, cumsum(vecnorm(diff(trajectory),2,2))'];
             interpNumTrajPoints = round(cumDistance(end)/interpDistance);
             cumDistanceResample = linspace(0, cumDistance(end), interpNumTrajPoints);
@@ -137,6 +177,8 @@ classdef HelperReferencePoseOnPath < matlab.System
             [~,~,~,refCurvature] = smoothPathSpline(refPose(:,1:3), ones(interpNumTrajPoints,1),interpNumTrajPoints);
             refPose(:,3) = deg2rad(refPose(:, 3));
             refPose(:,5) = deg2rad(refPose(:, 5));
+
+            obj.cumDistanceTraj = cumDistanceResample;
         end
 
         % Caluculate yaw from the positions
@@ -267,7 +309,7 @@ classdef HelperReferencePoseOnPath < matlab.System
                 obj.SectionStartIndex = lowerIdx - 1 + minIdx;
 
                 weight2 = 1-t(minIdx); %referencePoseから次のセクションまで距離の割合　次のセクションの重み
-                weight1 = t(minIdx);%現在セクションからreferencePoseまでの距離の割合　現在セクションの重み
+                weight1 = t(minIdx); %現在セクションからreferencePoseまでの距離の割合　現在セクションの重み
 
                 currPosePrev = waypoints(obj.SectionStartIndex,:);
 
@@ -349,6 +391,39 @@ classdef HelperReferencePoseOnPath < matlab.System
                 refCurvature = obj.RefCurvaturePrev;
                 obj.SectionStartIndex = numWaypoints-1;
                 isGoalReached = true;
+
+                if obj.numReferencePose > 1
+                    refPoseCurr = repmat(refPoseCurr, obj.numReferencePose, 1);
+                    refCurvature = repmat(refCurvature, obj.numReferencePose, 1);
+                    return;
+                end
+            end
+
+            % if trajectory needs multiple output, add those output based
+            % on speed and timestep  
+            if obj.numReferencePose > 1
+                distance_prediction = speed * obj.controlTimestep * obj.numReferencePose;
+                dists = obj.cumDistanceTraj - obj.cumDistanceTraj(obj.SectionStartIndex) - distance_prediction;
+                index_prediction = find(dists > 0, 1); % firt true means final points of prediction
+                if isempty(index_prediction)
+                    index_prediction = numWaypoints;
+                end
+
+                refPoseCurr_temp = refPoseCurr;
+                refPoseCurr_temp([3, 5]) = deg2rad(refPoseCurr_temp([3, 5]));
+                cumDist_future = [0, obj.cumDistanceTraj(obj.SectionStartIndex:index_prediction)] - obj.cumDistanceTraj(obj.SectionStartIndex);
+
+                waypts_future = [refPoseCurr_temp; waypoints(obj.SectionStartIndex:index_prediction, :)];
+                curvature_future = [refCurvature; curvatures(obj.SectionStartIndex:index_prediction, :)];
+
+                [cumDist_future, waypts_future, curvature_future] = removeDuplicateRows(cumDist_future, waypts_future, curvature_future);
+
+                traveled_dists = [0, speed * (1:obj.numReferencePose-1) * obj.controlTimestep];
+                % Interpolate the postion
+                refPoseCurr = interp1(cumDist_future,waypts_future,traveled_dists,'linear','extrap');
+                refCurvature = interp1(cumDist_future,curvature_future,traveled_dists,'linear','extrap')';
+
+                refPoseCurr(:,[3, 5]) = rad2deg(refPoseCurr(:,[3, 5]));
             end
         end
 
@@ -362,10 +437,10 @@ classdef HelperReferencePoseOnPath < matlab.System
             icon = [mfilename("class"), newline, newline, newline, newline];
         end
 
-        function [out,out2,out3] = getOutputSizeImpl(~)
+        function [out,out2,out3] = getOutputSizeImpl(obj)
             % Return size for each output port
-            out = [1 5];
-            out2 = [1 1];
+            out = [obj.numReferencePose 5];
+            out2 = [obj.numReferencePose 1];
             out3 = [1 1];
         end
 
@@ -406,4 +481,22 @@ classdef HelperReferencePoseOnPath < matlab.System
             end
         end
     end
+end
+function [cumDist_future, waypts_future, curvature_future] = removeDuplicateRows(cumDist_future, waypts_future, curvature_future)
+    [~, unique_indices1] = unique(cumDist_future, "stable");
+    [~, unique_indices2] = unique(waypts_future, "rows", "stable");
+    [~, unique_indices3] = unique(curvature_future, "stable");
+    
+    logicalArray1 = false(1, numel(cumDist_future));
+    logicalArray1(unique_indices1) = true;
+    logicalArray2 = false(1, numel(cumDist_future));
+    logicalArray2(unique_indices2) = true;
+    logicalArray3 = false(1, numel(cumDist_future));
+    logicalArray3(unique_indices3) = true;
+    
+    logicalArrayAnd = logicalArray1 & logicalArray2 & logicalArray3;
+    
+    cumDist_future = cumDist_future(logicalArrayAnd);
+    waypts_future = waypts_future(logicalArrayAnd, :);
+    curvature_future = curvature_future(logicalArrayAnd);
 end

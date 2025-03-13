@@ -60,22 +60,32 @@ assignin('base','max_ac',          3);       % Maximum acceleration   (m/s^2)
 assignin('base','min_ac',          -3);      % Minimum acceleration   (m/s^2)
 assignin('base','max_steer',       0.26);    % Maximum steering       (rad)
 assignin('base','min_steer',       -0.26);   % Minimum steering       (rad) 
-assignin('base','PredictionHorizon', 30);    % Prediction horizon     
+assignin('base','PredictionHorizon', 10);    % Prediction horizon     
 assignin('base','v0_ego', 0);                % Initial longitudinal velocity (m/s)
 assignin('base','tau2', 0.07);               % Longitudinal time constant (brake)             (N/A)
 assignin('base','max_dc', 10);               % Maximum deceleration   (m/s^2)
+assignin('base','control_timeStep', 0.1);    % control time step (s)
 
 %% Dynamics modeling parameters
+lf = 1.5130;
 lr = 1.3050;
 assignin('base','m',  1575);                 % Total mass of vehicle                          (kg)
 assignin('base','Iz', 2100);                 % Yaw moment of inertia of vehicle               (m*N*s^2)
 assignin('base','Cf', 19000);                % Cornering stiffness of front tires             (N/rad)
 assignin('base','Cr', 33000);                % Cornering stiffness of rear tires              (N/rad)
-assignin('base','lf', 1.5130);               % Longitudinal distance from c.g. to front tires (m)
+assignin('base','lf', lf);               % Longitudinal distance from c.g. to front tires (m)
 assignin('base','lr', lr);               % Longitudinal distance from c.g. to rear tires  (m)
 assignin('base', 'steeringGain', 0.8);       % Steering gain
 assignin('base', 'steerLimit', 30);     % Max steering limit
 assignin('base', 'steerGear', 18);     % steering gear ratio
+
+%% parameters for reference points output (for helperReferencePoseOnPath)
+% helperReferencePoseOnPath takes CG position but stanley control need
+% front axle position, so lf is set.
+% MPC case, it should be 0
+assignin('base', 'refPts_offset', lf);       % reference point offset   (m)
+assignin('base', 'controlMode', 'stanley');  % default is stanley
+assignin('base', 'numReferencePose', 1);     % default is one output, if this is increased, future trajectory is outputted
 
 %% Create Simulink bus
 helperCreateBusForTrajectoryFollowerWithRRScenario();
