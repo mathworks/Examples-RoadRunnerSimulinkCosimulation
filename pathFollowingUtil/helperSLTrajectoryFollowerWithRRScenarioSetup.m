@@ -18,6 +18,8 @@ arguments
     nvp.scenarioSimulationObj = [];
     nvp.rrAppObj = [];
     nvp.behaviorName = "";
+    nvp.controlMode = 'stanley';
+    nvp.numReferencePose = 1;
 end
 
 if ~isempty(nvp.scenarioSimulationObj)
@@ -84,9 +86,11 @@ assignin('base', 'steerGear', 18);     % steering gear ratio
 % front axle position, so lf is set.
 % MPC case, it should be 0
 assignin('base', 'refPts_offset', lf);       % reference point offset   (m)
-assignin('base', 'controlMode', 'stanley');  % default is stanley
-assignin('base', 'numReferencePose', 1);     % default is one output, if this is increased, future trajectory is outputted
-
+assignin('base', 'controlMode', nvp.controlMode);  % default is stanley
+assignin('base', 'numReferencePose', nvp.numReferencePose);     % default is one output, if this is increased, future trajectory is outputted
+if nvp.controlMode == "mpc"
+    assignin('base', 'refPts_offset', 0);       % reference point offset   (m)
+end
 %% Create Simulink bus
 helperCreateBusForTrajectoryFollowerWithRRScenario();
 helperCreatePathTargetBus(nvp.MaxPathPoints);
