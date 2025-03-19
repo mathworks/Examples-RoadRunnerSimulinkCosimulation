@@ -15,6 +15,9 @@ classdef HelperReferencePoseOnPath < matlab.System
         long_offset = 0;% long_offset: longitudinal offset from input position to front axle. If input position is on front axle, it's 0. 
 
         debugFig = false; % debugFig: if true, debug figure whch show vehicle target position on path is visualized
+        saveFigVideo = false; % only enabled if debugFig == true. "videos/pathFollow{N}.mp4" is saved (N is number). 
+        zoomFig = nan; % nan or positive scalar. if positive scalar is set, figure focus on vehicle
+
         searchIndx = 10; %Range of sections to search for the current nearest neighbor 現在の最近傍を検索するセクションの範囲
 
         numReferencePose = 1;%numReferencePose: default is 1, if this is increased, future trajectory is outputted
@@ -44,14 +47,38 @@ classdef HelperReferencePoseOnPath < matlab.System
         cumDistanceTraj
 
         % figure axis for debug draw;
+        f_handle;
         ax = [];
         h_repPts;
         h_vehicle;
         h_tire;
         h_futurePts;
+        h_quiver;
+        videoWriter;
     end
 
     methods(Access = protected)
+        function setupImpl(obj)
+            if obj.debugFig && obj.saveFigVideo
+                idx = 1;
+                while true
+                    vname = fullfile(pwd, "videos/", sprintf("pathFollow%02d.mp4", idx));
+                    if ~exist(vname, "file")
+                        break
+                    end
+                    idx = idx+1;
+                end
+
+                % VideoWriter
+                obj.videoWriter = VideoWriter(vname, "MPEG-4");
+                if obj.timeStep == -1
+                    obj.videoWriter.FrameRate = 30;
+                else
+                    obj.videoWriter.FrameRate = 1/obj.timeStep;  % 必要に応じて調整
+                end
+                obj.videoWriter.open();
+            end
+        end
         function [RefPointOnPath, RefCurvature, IsGoalReached] = stepImpl(obj, PrevVehicleInfo, Trajectory, NumTrajPoints, currentSpeed)
             
             % Getting Pose information from currPosePrev
@@ -106,19 +133,30 @@ classdef HelperReferencePoseOnPath < matlab.System
                 end
 
                 if obj.debugFig && isempty(obj.ax)
-                    f_handle = figure; set(f_handle, "Visible", "on");
+                    obj.f_handle = figure; set(obj.f_handle, "Visible", "on");
                     obj.ax = gca;
                     plot(waypoints(:,1), waypoints(:,2), "b-", 'Parent', obj.ax);
                     hold on;
                     % axis equal;
                     obj.h_repPts = plot(waypoints(1,1), waypoints(1,2), 'g*', 'MarkerSize', 12, 'Parent', obj.ax);
                     obj.h_vehicle = plot(waypoints(1:2,1), waypoints(1:2,2), '-r.', 'MarkerSize', 12, 'Parent', obj.ax);
-                    legend(obj.ax, ["trajectory", "ref pts", "vehicle pos"]);
+                    
+                    obj.h_quiver = quiver(currPose(1), currPose(2), cos(currPose(3)), sin(currPose(3)), Parent=obj.ax);
+                    obj.h_quiver.MaxHeadSize = 10;
+                    legend(obj.ax, ["trajectory", "ref pts", "vehicle pos", "vehicle orientation"], Location="southeast");
                     if obj.numReferencePose > 1
                         obj.h_futurePts = plot(RefPointOnPath(:,1), RefPointOnPath(:,2), 'm*', 'MarkerSize', 6, 'Parent', obj.ax);
-                        legend(obj.ax, ["trajectory", "ref pts", "vehicle pos", "future ref pts"]);
+                        legend(obj.ax, ["trajectory", "ref pts", "vehicle pos", "vehicle orientation", "future ref pts"]);
                     end
-                    % obj.h_tire = plot(waypoints(1:2,1), waypoints(1:2,2), '-m.', 'MarkerSize', 12, 'Parent', obj.ax);
+                    if ~isnan(obj.zoomFig) && obj.zoomFig > 0
+                        axis(obj.ax, 'manual');
+                        xlim(obj.ax, [currPose(1) - obj.zoomFig, currPose(1) + obj.zoomFig]);
+                        ylim(obj.ax, [currPose(2) - obj.zoomFig, currPose(2) + obj.zoomFig]);
+                    end
+                    if obj.saveFigVideo
+                        frame = getframe(obj.f_handle).cdata;
+                        obj.videoWriter.writeVideo(frame);
+                    end
                 end
 
                 return
@@ -139,12 +177,23 @@ classdef HelperReferencePoseOnPath < matlab.System
                 obj.h_vehicle.XData = [currPose(1), currPose(1)+obj.long_offset*cos(currPose(3))];
                 obj.h_vehicle.YData = [currPose(2), currPose(2)+obj.long_offset*sin(currPose(3))];
 
+                obj.h_quiver.XData = currPose(1);
+                obj.h_quiver.YData = currPose(2);
+                obj.h_quiver.UData = cos(currPose(3));
+                obj.h_quiver.VData = sin(currPose(3));
+
                 if obj.numReferencePose > 1
                     obj.h_futurePts.XData = RefPointOnPath(:,1);
                     obj.h_futurePts.YData = RefPointOnPath(:,2);
                 end
-                % obj.h_tire.XData = [currPose(1), currPose(1)+obj.dirLength*cos(currPose(3))];
-                % obj.h_vehicle.YData = [currPose(2), currPose(2)+obj.dirLength*sin(currPose(3))];
+                if ~isnan(obj.zoomFig) && obj.zoomFig > 0
+                    xlim(obj.ax, [currPose(1) - obj.zoomFig, currPose(1) + obj.zoomFig]);
+                    ylim(obj.ax, [currPose(2) - obj.zoomFig, currPose(2) + obj.zoomFig]);
+                end
+                if obj.saveFigVideo
+                    frame = getframe(obj.f_handle).cdata;
+                    obj.videoWriter.writeVideo(frame);
+                end
             end
         end
 
@@ -276,6 +325,7 @@ classdef HelperReferencePoseOnPath < matlab.System
                 end
                 weight1 = dist_forward / dist_nextSection; %現在値から次のセクションまで距離の割合　次のセクションの重み
                 weight2 = 1 - weight1;%現在セクションから現在地までの距離の割合　現在セクションの重み
+                sectionStartPose = currPosePrev;
             else
                 %車両が軌跡から外れる場合、最短のセクション（waypontsとwaypointsの間の線分）を探索する
                 PointXY_raw = currPosePrev(1:2);
@@ -311,7 +361,8 @@ classdef HelperReferencePoseOnPath < matlab.System
                 weight2 = 1-t(minIdx); %referencePoseから次のセクションまで距離の割合　次のセクションの重み
                 weight1 = t(minIdx); %現在セクションからreferencePoseまでの距離の割合　現在セクションの重み
 
-                currPosePrev = waypoints(obj.SectionStartIndex,:);
+                sectionStartPose = waypoints(obj.SectionStartIndex,:);
+                % currPosePrev = waypoints(obj.SectionStartIndex,:);
 
                 %debug for section
             %     figure;
@@ -349,19 +400,19 @@ classdef HelperReferencePoseOnPath < matlab.System
                 currentSectionEndIndex = obj.SectionStartIndex+1;
                 nextSectionEndIndex    = currentSectionEndIndex+1;
                 % Target States at end point of current and next sections
-                XYTarget0 = [currPosePrev(1), currPosePrev(2)];
+                XYTarget0 = [sectionStartPose(1), sectionStartPose(2)];
                 XYTarget1 = [waypoints(currentSectionEndIndex,1),...
                              waypoints(currentSectionEndIndex,2)];
-                YawTarget0 = currPosePrev(3);
+                YawTarget0 = sectionStartPose(3);
                 YawTarget1 = waypoints(currentSectionEndIndex,3);
                 YawTarget1_set = [YawTarget1, YawTarget1+2*pi, YawTarget1-2*pi];
                 [~, index_min] = min(abs(YawTarget1_set - YawTarget0));
 
                 YawTarget1 = YawTarget1_set(index_min);
 
-                ZTarget0 = currPosePrev(4);
+                ZTarget0 = sectionStartPose(4);
                 ZTarget1 = waypoints(currentSectionEndIndex,4);
-                PitchTarget0 = currPosePrev(5);
+                PitchTarget0 = sectionStartPose(5);
                 PitchTarget1 = waypoints(currentSectionEndIndex,5);
                 
                 CurvatureTarget0 = curvatures(obj.SectionStartIndex);
@@ -402,8 +453,9 @@ classdef HelperReferencePoseOnPath < matlab.System
             % if trajectory needs multiple output, add those output based
             % on speed and timestep  
             if obj.numReferencePose > 1
+                currentSectionEndIndex = obj.SectionStartIndex+1;
                 distance_prediction = speed * obj.controlTimestep * obj.numReferencePose;
-                dists = obj.cumDistanceTraj - obj.cumDistanceTraj(obj.SectionStartIndex) - distance_prediction;
+                dists = obj.cumDistanceTraj - obj.cumDistanceTraj(currentSectionEndIndex) - distance_prediction;
                 index_prediction = find(dists > 0, 1); % firt true means final points of prediction
                 if isempty(index_prediction)
                     index_prediction = numWaypoints;
@@ -411,10 +463,10 @@ classdef HelperReferencePoseOnPath < matlab.System
 
                 refPoseCurr_temp = refPoseCurr;
                 refPoseCurr_temp([3, 5]) = deg2rad(refPoseCurr_temp([3, 5]));
-                cumDist_future = [0, obj.cumDistanceTraj(obj.SectionStartIndex:index_prediction)] - obj.cumDistanceTraj(obj.SectionStartIndex);
+                cumDist_future = [0, obj.cumDistanceTraj(currentSectionEndIndex:index_prediction) - obj.cumDistanceTraj(currentSectionEndIndex)];
 
-                waypts_future = [refPoseCurr_temp; waypoints(obj.SectionStartIndex:index_prediction, :)];
-                curvature_future = [refCurvature; curvatures(obj.SectionStartIndex:index_prediction, :)];
+                waypts_future = [refPoseCurr_temp; waypoints(currentSectionEndIndex:index_prediction, :)];
+                curvature_future = [refCurvature; curvatures(currentSectionEndIndex:index_prediction, :)];
 
                 [cumDist_future, waypts_future, curvature_future] = removeDuplicateRows(cumDist_future, waypts_future, curvature_future);
 
@@ -428,8 +480,8 @@ classdef HelperReferencePoseOnPath < matlab.System
         end
 
 
-        function resetImpl(~)
-            % Initialize / reset discrete-state properties
+        function releaseImpl(obj)
+            close(obj.videoWriter);
         end
 
         function icon = getIconImpl(~)

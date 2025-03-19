@@ -55,6 +55,7 @@ if ~isempty(nvp.scenarioSimulationObj)
 end
 
 %% Path following controller parameters
+PredictionHorizon = 10;
 assignin('base','tau',             0.5);     % Time constant for longitudinal dynamics 1/s/(tau*s+1)
 assignin('base','time_gap',        1.5);     % Time gap               (s)
 assignin('base','default_spacing', 10);      % Default spacing        (m)
@@ -62,7 +63,7 @@ assignin('base','max_ac',          3);       % Maximum acceleration   (m/s^2)
 assignin('base','min_ac',          -3);      % Minimum acceleration   (m/s^2)
 assignin('base','max_steer',       0.26);    % Maximum steering       (rad)
 assignin('base','min_steer',       -0.26);   % Minimum steering       (rad) 
-assignin('base','PredictionHorizon', 10);    % Prediction horizon     
+assignin('base','PredictionHorizon', PredictionHorizon);    % Prediction horizon     
 assignin('base','v0_ego', 0);                % Initial longitudinal velocity (m/s)
 assignin('base','tau2', 0.07);               % Longitudinal time constant (brake)             (N/A)
 assignin('base','max_dc', 10);               % Maximum deceleration   (m/s^2)
@@ -90,6 +91,14 @@ assignin('base', 'controlMode', nvp.controlMode);  % default is stanley
 assignin('base', 'numReferencePose', nvp.numReferencePose);     % default is one output, if this is increased, future trajectory is outputted
 if nvp.controlMode == "mpc"
     assignin('base', 'refPts_offset', 0);       % reference point offset   (m)
+    assignin('base', 'numReferencePose', PredictionHorizon);       % reference point offset   (m)
+elseif nvp.controlMode == "mpc_mod"
+    assignin('base', 'refPts_offset', lf);       % reference point offset   (m)
+    assignin('base', 'numReferencePose', 1);       % reference point offset   (m)
+    data_mat = load("pathFollowingUtil\mpc_base.mat");
+    assignin('base', 'mpc_base', data_mat.mpc_base);
+    data_mat = load("pathFollowingUtil\pfcsubsystem_data.mat");
+    assignin('base', 'pfcsubsystem_data', data_mat.pfcsubsystem_data);
 end
 %% Create Simulink bus
 helperCreateBusForTrajectoryFollowerWithRRScenario();
