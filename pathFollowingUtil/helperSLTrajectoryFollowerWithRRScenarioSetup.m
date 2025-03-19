@@ -20,6 +20,7 @@ arguments
     nvp.behaviorName = "";
     nvp.controlMode = 'stanley';
     nvp.numReferencePose = 1;
+    nvp.MultibodySetting = false;
 end
 
 if ~isempty(nvp.scenarioSimulationObj)
@@ -112,7 +113,7 @@ if exist("egoInitialPose", "var")
 end
 
 %% for multibody setting
-if exist("egoInitialPose", "var")
+if exist("egoInitialPose", "var") && nvp.MultibodySetting
     addpath(genpath('multibodyUtil'));
     [VehicleData, Camera] = setupMultibodyVehicleSpec();
     [InitVehicle, SceneData] = setMultibodyVehicleInitialPose(egoInitialPose, VehicleData);
