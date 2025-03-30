@@ -59,6 +59,7 @@ classdef HelperRotateWheels < matlab.System
                 wheelPoses(1:3,1:3,i) = rotm;
             end
 
+            wheelPoses = repmat(eye(4,4,"double"), 18);
             % Write the updated wheel poses back to roadrunner
             setAttribute(egoActorSimObj,"WheelPoses",wheelPoses);
         end
