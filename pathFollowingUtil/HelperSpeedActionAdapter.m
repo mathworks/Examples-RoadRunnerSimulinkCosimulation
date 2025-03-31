@@ -16,7 +16,7 @@ classdef HelperSpeedActionAdapter < matlab.System
 
         % Target and current speed
         TargetSpeed = 0;
-        CurrentSpeed = 0;
+        CurrentSpeed = nan;
 
         % Transition properties
         TransitionInitialSpeed = 0;
@@ -83,6 +83,10 @@ classdef HelperSpeedActionAdapter < matlab.System
                 currentSpeed = 0;
             else
                 currentSpeed = obj.CurrentSpeed;
+            end
+
+            if obj.Command.SpeedComparison == EnumSpeedComparison.FromPath
+                currentSpeed = nan;
             end
         end
 
