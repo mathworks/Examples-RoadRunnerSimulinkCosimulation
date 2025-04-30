@@ -121,6 +121,8 @@ if exist("egoInitialPose", "var") && nvp.MultibodySetting
     assignin('base',"SceneData",SceneData);
     assignin('base',"VehicleData",VehicleData);
     assignin('base',"Camera",Camera);
+    assignin('base',"vehicleVariant", "Multibody");
+    assignin('base',"useDynamicsStanley", true);
 end
 end
 
