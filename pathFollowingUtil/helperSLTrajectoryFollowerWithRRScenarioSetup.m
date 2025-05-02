@@ -109,7 +109,8 @@ if exist("egoInitialPose", "var")
     [egoInitialPoseCG, egoInitialPoseRear] = egoVehicleInfoForRear(egoInitialPose, lr);
     assignin('base', 'egoInitialPoseCG', egoInitialPoseCG);
     assignin('base', 'egoInitialPoseRear', egoInitialPoseRear);
-    hegihtMap = "flat";
+    heightMap = "flat";
+    assignin('base', 'heightMap', heightMap);
 end
 
 %% for multibody setting
