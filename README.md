@@ -53,6 +53,7 @@ MATLAB and RoadRunner versions must match. If you have installed different versi
 - Stateflow&reg; (only needed when runnning handsOn07*)
 - Control System Toolbox&trade; (only needed when runnning handsOn08*)
 - Model Predictive Control Toolbox&trade; (only needed when runnning handsOn08*)
+- MATLAB Support for MinGW-w64 C/C++/Fortran Compiler (You can add this by Add-Ons explorer. If your environment doesn't have any other compiler like Visual Studio)
 
 <!-- This is the "Title of the contribution" that was approved during the Community Contribution Review Process --> 
 
@@ -124,6 +125,7 @@ MATLABとRoadRunnerのversionは揃える必要があるため、異なるversio
 - Stateflow (handsOn07*実行時のみ必要)
 - Control System Toolbox (handsOn08*実行時のみ必要)
 - Model Predictive Control Toolbox (handsOn08*実行時のみ必要)
+- MATLAB Support for MinGW-w64 C/C++/Fortran Compiler (Add-Onsエクスプローラより導入。Visual Studioなどその他対応コンパイラがない場合に必要。)
 <!---
 ### MathWorks Products (https://www.mathworks.com)
 Requires MATLAB release R2024a or newer
