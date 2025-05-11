@@ -11,12 +11,17 @@ classdef HelperReferencePoseOnPath < matlab.System
     properties(Access = public)
         timeStep = 0.01; % time step for distance calculation by speed
         
-        vehicleOnPath = true; % vehicleOnPath: if vehicle doesn't follow path exactly, set this false
-        long_offset = 0;% long_offset: longitudinal offset from input position to front axle. If input position is on front axle, it's 0. 
+        refPointSpeedOffset = true; % refPointSpeedOffset: reference point is offset based on current speed
+        refPts_offset = 0;% refPts_offset: longitudinal offset from input position to reference point. path error is measured by "input + refPts_offset" position.
+        output_offset = 0;% output_offset: longitudinal offset from reference position to output position.
+        % refPts_offset: 入力される車両位置はCG positionを想定している。もし、CG positionではなく、前軸中心や前バンパー中心が軌跡を通ることを想定している場合、軌跡と自車の差分はこれらの位置を基準にして行われるべきである。したがって、CG positionから基準位置を変更できるようにrefPts_offsetを設定可能にしている。
+        % output_offset: 軌跡が通るべき基準位置(reference point)とは別に制御器やシミュレータの仕様上、CG位置を出力したいケースがある。そのため、reference pointにoutput_offsetを加算して出力できるように設計している。例えば、前軸中心が軌跡を通りつつ、入出力はCG positionとしたい場合は、refPts_offset = lf; output_offset = -lf;と設定する。（lfはCG positionから前軸中心までの距離）
+        % refPts_offset: The input vehicle position is assumed to be the CG position. If, instead of the CG position, the trajectory is meant to follow the front‐axle center or front‐bumper center, then the error between the trajectory and the ego vehicle should be computed relative to those points. Therefore, refPts_offset is provided to allow changing the reference point from the CG position to any desired point.
+        % output_offset: In some cases, due to controller or simulator requirements, you may want to output the CG position even though a different reference point is used for following the trajectory. To support this, output_offset is added to the reference point when producing the output. For example, if you want the front‐axle center to follow the trajectory while the inputs and outputs remain the CG position, set:
 
         debugFig = false; % debugFig: if true, debug figure whch show vehicle target position on path is visualized
-        saveFigVideo = false; % only enabled if debugFig == true. "videos/pathFollow{N}.mp4" is saved (N is number). 
-        zoomFig = nan; % nan or positive scalar. if positive scalar is set, figure focus on vehicle
+        saveFigVideo = false; % saveVideo: only enabled if debugFig == true. "videos/pathFollow{N}.mp4" is saved (N is number). 
+        zoomFig = nan; % zoomFig: nan or positive scalar. if positive scalar is set, figure focus on vehicle
 
         searchIndx = 10; %Range of sections to search for the current nearest neighbor 現在の最近傍を検索するセクションの範囲
 
@@ -45,7 +50,7 @@ classdef HelperReferencePoseOnPath < matlab.System
         % Reference speed on each waypoint
         RefSpeedOnWaypoint
 
-        % line segment (only enable if vehicleOnPath == false)
+        % line segment
         lineSegment;
         lineSegment_sq;
 
@@ -56,11 +61,18 @@ classdef HelperReferencePoseOnPath < matlab.System
         f_handle;
         ax = [];
         h_repPts;
+        h_refPts_traj_output;
+        h_refPts_vehicle;
         h_vehicle;
         h_tire;
         h_futurePts;
         h_quiver;
+        h_vehicleShape;
         videoWriter;
+
+        % vehicle shape parameters
+        L_vehicle = 4.5;
+        W_vehicle = 2.0;
     end
 
     methods(Access = protected)
@@ -115,14 +127,14 @@ classdef HelperReferencePoseOnPath < matlab.System
                 obj.RefSpeedOnPathPrev = RefSpeedOnPath;
                 obj.RefTimingPrev = RefTimings;
 
-                % 車両が軌跡に載っていないときのみ使用する
-                if obj.vehicleOnPath == false
-                    P1 = waypoints(1:end-1, 1:2); %x, yのみ考える
-                    P2 = waypoints(2:end, 1:2);
+                % 車両が軌跡に載っていないときのみ使用する⇒全パターンで使用に変更
+                % if obj.vehicleOnPath == false
+                P1 = waypoints(1:end-1, 1:2); %x, yのみ考える
+                P2 = waypoints(2:end, 1:2);
 
-                    obj.lineSegment = P2 - P1;
-                    obj.lineSegment_sq = sum(obj.lineSegment.^2, 2);
-                end
+                obj.lineSegment = P2 - P1;
+                obj.lineSegment_sq = sum(obj.lineSegment.^2, 2);
+                % end
 
                 % if trajectory needs multiple output, add those output based
                 % on speed and timestep  
@@ -155,21 +167,41 @@ classdef HelperReferencePoseOnPath < matlab.System
                     end
                 end
 
+                offset_xy = [obj.output_offset*cos(currPose(3)), obj.output_offset*sin(currPose(3))];
+                offset_xyz = [offset_xy * cos(currPose(5)), obj.output_offset*-sin(currPose(5))];
+                RefPointOnPath(:, [1, 2, 4]) = RefPointOnPath(:, [1, 2, 4]) + offset_xyz;
+
                 if obj.debugFig && isempty(obj.ax)
                     obj.f_handle = figure; set(obj.f_handle, "Visible", "on");
                     obj.ax = gca;
+
+                    % 車両長方形の描画
+                    obj.h_vehicleShape = plot([0 0 0 0 0], [0 0 0 0 0], 'k-', 'LineWidth', 2);
+                    R = [cos(currPose(3)), -sin(currPose(3)); sin(currPose(3)), cos(currPose(3))];
+                    corners = [-obj.L_vehicle/2, -obj.W_vehicle/2; obj.L_vehicle/2, -obj.W_vehicle/2; obj.L_vehicle/2, obj.W_vehicle/2; -obj.L_vehicle/2, obj.W_vehicle/2];
+                    rotated_corners = (R * corners')' + currPose(1:2);
+                    x_rot = rotated_corners(:, 1);
+                    y_rot = rotated_corners(:, 2);
+                    obj.h_vehicleShape.XData = [x_rot; x_rot(1)];
+                    obj.h_vehicleShape.YData = [y_rot; y_rot(1)];
+                    hold on;
+
+                    % 軌跡の描画
                     plot(waypoints(:,1), waypoints(:,2), "b-", 'Parent', obj.ax);
                     hold on;
                     % axis equal;
                     obj.h_repPts = plot(waypoints(1,1), waypoints(1,2), 'g*', 'MarkerSize', 12, 'Parent', obj.ax);
-                    obj.h_vehicle = plot(waypoints(1:2,1), waypoints(1:2,2), '-r.', 'MarkerSize', 12, 'Parent', obj.ax);
+                    obj.h_vehicle = plot(waypoints(1,1), waypoints(1,2), 'r.', 'MarkerSize', 12, 'Parent', obj.ax);
+                    obj.h_refPts_vehicle = plot(waypoints(2,1), waypoints(2,2), 'm*', 'MarkerSize', 12, 'Parent', obj.ax);
+                    obj.h_refPts_traj_output = plot(waypoints(2,1), waypoints(2,2), 'c*', 'MarkerSize', 12, 'Parent', obj.ax);
                     
                     obj.h_quiver = quiver(currPose(1), currPose(2), cos(currPose(3)), sin(currPose(3)), Parent=obj.ax);
                     obj.h_quiver.MaxHeadSize = 10;
-                    legend(obj.ax, ["trajectory", "ref pts", "vehicle pos", "vehicle orientation"], Location="southeast");
+
+                    legend(obj.ax, ["vehicle", "trajectory", "ref pts (traj)", "vehicle pos (CG)", "ref pts (vehicle)", "ref pts (output)"], Location="southeast");
                     if obj.numReferencePose > 1
                         obj.h_futurePts = plot(RefPointOnPath(:,1), RefPointOnPath(:,2), 'm*', 'MarkerSize', 6, 'Parent', obj.ax);
-                        legend(obj.ax, ["trajectory", "ref pts", "vehicle pos", "vehicle orientation", "future ref pts"]);
+                        legend(obj.ax, ["vehicle", "trajectory", "ref pts (traj)", "vehicle pos", "ref pts (vehicle)", "ref pts (output)", "future ref pts"]);
                     end
                     if ~isnan(obj.zoomFig) && obj.zoomFig > 0
                         axis(obj.ax, 'manual');
@@ -189,6 +221,12 @@ classdef HelperReferencePoseOnPath < matlab.System
             [IsGoalReached,RefPointOnPath,RefCurvature,RefTimings,RefSpeedOnPath] = computeReferenceStateBasedOnPose(...
                 obj,currPose,obj.RefPath,obj.RefCurvature,currentSpeed,obj.RefTimings, obj.RefSpeedOnWaypoint);
 
+            RefPointOnPath_beforeOffset = RefPointOnPath;
+            % offset for output position
+            offset_xy = [obj.output_offset*cos(currPose(3)), obj.output_offset*sin(currPose(3))];
+            offset_xyz = [offset_xy * cos(currPose(5)), obj.output_offset*-sin(currPose(5))];
+            RefPointOnPath(:, [1, 2, 4]) = RefPointOnPath(:, [1, 2, 4]) + offset_xyz;
+
             % Update the pose and curvature for next time step
             obj.RefPosePrev = RefPointOnPath;
             obj.RefCurvaturePrev = RefCurvature;
@@ -196,16 +234,31 @@ classdef HelperReferencePoseOnPath < matlab.System
             obj.RefSpeedOnPathPrev = RefSpeedOnPath;
 
             if obj.debugFig
-                obj.h_repPts.XData = RefPointOnPath(1, 1);
-                obj.h_repPts.YData = RefPointOnPath(1, 2);
+                obj.h_repPts.XData = RefPointOnPath_beforeOffset(1, 1);
+                obj.h_repPts.YData = RefPointOnPath_beforeOffset(1, 2);
 
-                obj.h_vehicle.XData = [currPose(1), currPose(1)+obj.long_offset*cos(currPose(3))];
-                obj.h_vehicle.YData = [currPose(2), currPose(2)+obj.long_offset*sin(currPose(3))];
+                obj.h_vehicle.XData = currPose(1);
+                obj.h_vehicle.YData = currPose(2);
 
+                obj.h_refPts_vehicle.XData = currPose(1)+obj.refPts_offset*cos(currPose(3))*cos(currPose(5));
+                obj.h_refPts_vehicle.YData = currPose(2)+obj.refPts_offset*sin(currPose(3))*cos(currPose(5));
+                
+                obj.h_refPts_traj_output.XData = RefPointOnPath(1, 1);
+                obj.h_refPts_traj_output.YData = RefPointOnPath(1, 2);
+                
                 obj.h_quiver.XData = currPose(1);
                 obj.h_quiver.YData = currPose(2);
                 obj.h_quiver.UData = cos(currPose(3));
                 obj.h_quiver.VData = sin(currPose(3));
+
+                % 車両長方形の描画
+                R = [cos(currPose(3)), -sin(currPose(3)); sin(currPose(3)), cos(currPose(3))];
+                corners = [-obj.L_vehicle/2, -obj.W_vehicle/2; obj.L_vehicle/2, -obj.W_vehicle/2; obj.L_vehicle/2, obj.W_vehicle/2; -obj.L_vehicle/2, obj.W_vehicle/2];
+                rotated_corners = (R * corners')' + currPose(1:2);
+                x_rot = rotated_corners(:, 1);
+                y_rot = rotated_corners(:, 2);
+                obj.h_vehicleShape.XData = [x_rot; x_rot(1)];
+                obj.h_vehicleShape.YData = [y_rot; y_rot(1)];
 
                 if obj.numReferencePose > 1
                     obj.h_futurePts.XData = RefPointOnPath(:,1);
@@ -224,7 +277,7 @@ classdef HelperReferencePoseOnPath < matlab.System
 
         % Generate curvatures from the trajectory
         function [refPose, refCurvature, refTimings, refSpeed] = ...
-                generateCurvatures(obj, trajectory, numTrajPoints, timings)
+            generateCurvatures(obj, trajectory, numTrajPoints, timings)
             % Remove repetetive waypoints
             [~,uniqueId] = unique(trajectory(1:numTrajPoints,1),'stable');
             trajectory = trajectory(uniqueId,:);
@@ -324,9 +377,16 @@ classdef HelperReferencePoseOnPath < matlab.System
                 return;
             end
 
+            % 使用していない
             % 車両が必ず軌跡上に乗る場合、車両の移動距離に応じてセクションを切り替える
             % （＝どのwaypoitsを参照姿勢とするかは車両の移動距離のみで決まる）
-            if obj.vehicleOnPath
+            if false
+                offset_xy = [obj.refPts_offset*cos(currPosePrev(3)), obj.refPts_offset*sin(currPosePrev(3))];
+                offset_xyz = [offset_xy * cos(currPosePrev(5)), obj.refPts_offset*-sin(currPosePrev(5))];
+                % PointXY = PointXY_raw + offset(1:2);
+                currPoseRef = currPosePrev;
+                % currPoseRef([1, 2, 4]) = currPosePrev([1, 2, 4]) + offset_xyz;
+
                 % Forward distance
                 dist_forward = speed * obj.timeStep;
                 
@@ -336,14 +396,14 @@ classdef HelperReferencePoseOnPath < matlab.System
                            waypoints(obj.SectionStartIndex+1,4)-waypoints(obj.SectionStartIndex,4)];
                 
                 % Distance between current position and section starting point
-                RXY = [currPosePrev(1)-waypoints(obj.SectionStartIndex,1),...
-                       currPosePrev(2)-waypoints(obj.SectionStartIndex,2),...
-                       currPosePrev(4)-waypoints(obj.SectionStartIndex,4)];
+                RXY = [currPoseRef(1)-waypoints(obj.SectionStartIndex,1),...
+                       currPoseRef(2)-waypoints(obj.SectionStartIndex,2),...
+                       currPoseRef(4)-waypoints(obj.SectionStartIndex,4)];
     
                 %
-                RXY_next = [waypoints(obj.SectionStartIndex+1,1) - currPosePrev(1),...
-                       waypoints(obj.SectionStartIndex+1,2) - currPosePrev(2),...
-                       waypoints(obj.SectionStartIndex+1,4) - currPosePrev(4)];
+                RXY_next = [waypoints(obj.SectionStartIndex+1,1) - currPoseRef(1),...
+                       waypoints(obj.SectionStartIndex+1,2) - currPoseRef(2),...
+                       waypoints(obj.SectionStartIndex+1,4) - currPoseRef(4)];
                 dist_nextSection = norm(RXY_next);
     
                 % 車両が次のセクションよりも進む場合、現在セクションを次のセクションに更新
@@ -363,10 +423,12 @@ classdef HelperReferencePoseOnPath < matlab.System
             else
                 %車両が軌跡から外れる場合、最短のセクション（waypontsとwaypointsの間の線分）を探索する
                 PointXY_raw = currPosePrev(1:2);
-                offset = eul2rotm([currPosePrev(3), 0, currPosePrev(5)], "ZYX") * [obj.long_offset; 0; 0];
-                offset = [obj.long_offset*cos(currPosePrev(3)), obj.long_offset*sin(currPosePrev(3))];
+                offset_temp = obj.refPts_offset;
+                if obj.refPointSpeedOffset
+                    offset_temp = offset_temp + speed * obj.timeStep;
+                end
+                offset = [offset_temp*cos(currPosePrev(3)), offset_temp*sin(currPosePrev(3))] * cos(currPosePrev(5));
 
-                % offset = eul2rotm([currPosePrev(3), 0, currPosePrev(5)], "ZYX") * [speed * obj.timeStep; 0; 0];
                 PointXY = PointXY_raw + offset(1:2);
 
                 %現在のセクションより近傍のセクションのみ探索
