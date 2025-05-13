@@ -223,8 +223,8 @@ classdef HelperReferencePoseOnPath < matlab.System
 
             RefPointOnPath_beforeOffset = RefPointOnPath;
             % offset for output position
-            offset_xy = [obj.output_offset*cos(currPose(3)), obj.output_offset*sin(currPose(3))];
-            offset_xyz = [offset_xy * cos(currPose(5)), obj.output_offset*-sin(currPose(5))];
+            offset_xy = [obj.output_offset*cosd(RefPointOnPath(3)), obj.output_offset*sind(RefPointOnPath(3))];
+            offset_xyz = [offset_xy * cosd(RefPointOnPath(5)), obj.output_offset*-sind(RefPointOnPath(5))];
             RefPointOnPath(:, [1, 2, 4]) = RefPointOnPath(:, [1, 2, 4]) + offset_xyz;
 
             % Update the pose and curvature for next time step
@@ -234,15 +234,19 @@ classdef HelperReferencePoseOnPath < matlab.System
             obj.RefSpeedOnPathPrev = RefSpeedOnPath;
 
             if obj.debugFig
+                % ref pts (traj)
                 obj.h_repPts.XData = RefPointOnPath_beforeOffset(1, 1);
                 obj.h_repPts.YData = RefPointOnPath_beforeOffset(1, 2);
 
+                % vehicle pos (CG)
                 obj.h_vehicle.XData = currPose(1);
                 obj.h_vehicle.YData = currPose(2);
 
+                % ref pts (vehicle)
                 obj.h_refPts_vehicle.XData = currPose(1)+obj.refPts_offset*cos(currPose(3))*cos(currPose(5));
                 obj.h_refPts_vehicle.YData = currPose(2)+obj.refPts_offset*sin(currPose(3))*cos(currPose(5));
                 
+                % ref pts (output)
                 obj.h_refPts_traj_output.XData = RefPointOnPath(1, 1);
                 obj.h_refPts_traj_output.YData = RefPointOnPath(1, 2);
                 
