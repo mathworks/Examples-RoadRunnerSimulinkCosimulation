@@ -88,6 +88,7 @@ assignin('base', 'steerGear', 18);     % steering gear ratio
 % front axle position, so lf is set.
 % MPC case, it should be 0
 assignin('base', 'refPts_offset', lf);       % reference point offset   (m)
+assignin('base', 'output_offset_referenceOnPath', 0); % output offset from helperReferenceOnPath
 assignin('base', 'controlMode', nvp.controlMode);  % default is stanley
 assignin('base', 'numReferencePose', nvp.numReferencePose);     % default is one output, if this is increased, future trajectory is outputted
 if nvp.controlMode == "mpc"
@@ -101,6 +102,7 @@ elseif nvp.controlMode == "mpc_mod"
     data_mat = load("pathFollowingUtil\pfcsubsystem_data.mat");
     assignin('base', 'pfcsubsystem_data', data_mat.pfcsubsystem_data);
 end
+
 %% Create Simulink bus
 helperCreateBusForTrajectoryFollowerWithRRScenario();
 helperCreatePathTargetBus(nvp.MaxPathPoints);
@@ -124,6 +126,20 @@ if exist("egoInitialPose", "var") && nvp.MultibodySetting
     assignin('base',"Camera",Camera);
     assignin('base',"vehicleVariant", "Multibody");
     assignin('base',"useDynamicsStanley", true);
+end
+%% for mode setting vehicle dynamics and control
+if evalin('base', 'exist(''useDynamicsStanley'', ''var'')') == 0
+    % 未定義の場合、固定値を代入
+    assignin('base', 'useDynamicsStanley', false);
+    assignin('base', 'output_offset_referenceOnPath', -lf);
+else
+    if ~evalin('base', 'useDynamicsStanley')
+        assignin('base', 'output_offset_referenceOnPath', -lf);
+    end
+end
+if evalin('base', 'exist(''vehicleVariant'', ''var'')') == 0
+    % 未定義の場合、固定値を代入
+    assignin('base', 'vehicleVariant', '3DOF');
 end
 end
 

@@ -200,8 +200,8 @@ classdef HelperReferencePoseOnPath < matlab.System
 
                     legend(obj.ax, ["vehicle", "trajectory", "ref pts (traj)", "vehicle pos (CG)", "ref pts (vehicle)", "ref pts (output)"], Location="southeast");
                     if obj.numReferencePose > 1
-                        obj.h_futurePts = plot(RefPointOnPath(:,1), RefPointOnPath(:,2), 'm*', 'MarkerSize', 6, 'Parent', obj.ax);
-                        legend(obj.ax, ["vehicle", "trajectory", "ref pts (traj)", "vehicle pos", "ref pts (vehicle)", "ref pts (output)", "future ref pts"]);
+                        obj.h_futurePts = plot(RefPointOnPath(:,1), RefPointOnPath(:,2), 'c*', 'MarkerSize', 6, 'Parent', obj.ax);
+                        legend(obj.ax, ["vehicle", "trajectory", "ref pts (traj)", "vehicle pos (CG)", "ref pts (vehicle)", "ref pts (output)", "vehicle direction", "future ref pts"]);
                     end
                     if ~isnan(obj.zoomFig) && obj.zoomFig > 0
                         axis(obj.ax, 'manual');
@@ -223,8 +223,8 @@ classdef HelperReferencePoseOnPath < matlab.System
 
             RefPointOnPath_beforeOffset = RefPointOnPath;
             % offset for output position
-            offset_xy = [obj.output_offset*cosd(RefPointOnPath(3)), obj.output_offset*sind(RefPointOnPath(3))];
-            offset_xyz = [offset_xy * cosd(RefPointOnPath(5)), obj.output_offset*-sind(RefPointOnPath(5))];
+            offset_xy = [obj.output_offset*cosd(RefPointOnPath(1,3)), obj.output_offset*sind(RefPointOnPath(1,3))];
+            offset_xyz = [offset_xy * cosd(RefPointOnPath(1,5)), obj.output_offset*-sind(RefPointOnPath(1,5))];
             RefPointOnPath(:, [1, 2, 4]) = RefPointOnPath(:, [1, 2, 4]) + offset_xyz;
 
             % Update the pose and curvature for next time step
