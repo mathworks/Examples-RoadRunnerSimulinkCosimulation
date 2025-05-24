@@ -24,6 +24,7 @@ Below is a description of the main files (prefix "EN_" means English and "JP_" m
 - **handsOn06_2_handsOn06_2_simulaitonPathFollowing14DoF_CRG**: similar example to "handsOn06_simulaitonPathFollowing14DoF.mlx" but not 2D Look up table but CRG file is used for ground height reading
 - **handsOn07_simulaitonPathFollowingMultibody.mlx**: Use the RoadRunner ScenarioReader to obtain speed and trajectory information, and then experience a Simulink model in which the vehicle follows the cretaed trajectory. This is a sample that uses a Simscape Multibody model for vehicle dynamics.
 - **handsOn08_handsOn08_controlComparison.mlx**: Use the RoadRunner ScenarioReader to obtain speed and trajectory information, and compares trajectory tracking using Stanley control and Model Predictive Control.
+- **handsOn09_handsOn09_eV_FuelEfficiency.mlx**: Sample that retrieves the reference trajectory and reference speed from RoadRunner and simulates the powertrain. Visualizes EV energy consumption (equivalent fuel economy for gasoline vehicles), torque, and other parameters.
 - **suppelement/CP_estimation_fromTIR/sample_estCP.mlx**: A program that visualizes tire characteristics represented by the Magic Formula from a TIR file, and calculates the cornering power (CP) from the linear region. (Front CP is required as a control parameter for Stanley control.)
 
 ## Setup
@@ -74,7 +75,8 @@ MATLAB and RoadRunner versions must match. If you have installed different versi
 - **handsOn06_simulaitonPathFollowing14DoF.mlx**: RoadRunner ScenarioReaderブロックより車速や軌跡情報を取得し、作成した軌跡通りに車両が追従するSimulinkモデルを体験。14自由度（車体6自由度＋タイヤ２自由度×4）車両ダイナミクスをStanley制御でコントロールするモードを実行し、それぞれの軌跡の差を可視化。2輪モデルでは表現できないタイヤの飽和領域や道路勾配の影響を可視化できるシーンで比較。
 - **handsOn06_2_simulaitonPathFollowing14DoF_CRG.mlx**: handsOn06_simulaitonPathFollowing14DoF.mlxとほとんど同じ例題だが、路面高さの読出しをCRGファイルより実施
 - **handsOn07_simulaitonPathFollowingMultibody.mlx**: RoadRunner ScenarioReaderブロックより車速や軌跡情報を取得し、作成した軌跡通りに車両が追従するSimulinkモデルを体験。車両ダイナミクスとしてSimspace Multibodyのモデルを使用するサンプル。
-- **handsOn08__handsOn08_controlComparison.mlx**: RoadRunner ScenarioReaderブロックより車速や軌跡情報を取得し、Stanley制御での軌跡追従とModel Predictive Controlでの軌跡追従を比較するサンプル。
+- **handsOn08_handsOn08_controlComparison.mlx**: RoadRunner ScenarioReaderブロックより車速や軌跡情報を取得し、Stanley制御での軌跡追従とModel Predictive Controlでの軌跡追従を比較するサンプル。
+- **handsOn09_handsOn09_eV_FuelEfficiency.mlx**: RoadRunnerより参照軌跡と参照速度を取得し、パワートレインをシミュレーションするサンプル。EVの電費（ガソリン車の燃費相当）やトルクなどを可視化。
 - **suppelement/CP_estimation_fromTIR/sample_estCP.mlx**: TIRファイルよりマジックフォーミュラで表現されたタイヤ特性を可視化し、線形領域よりコーナリングパワー(CP)を算出するプログラム。（stanley制御の制御パラメータとしてフロントCPが必要。）
 
 <!--- If you mention any trademarks, all MathWorks&reg; (including MATLAB&reg;)  and 3rd party trademarks&trade; need to be correctly marked the first time they are prominently used in each file (including the README.MD).  --->

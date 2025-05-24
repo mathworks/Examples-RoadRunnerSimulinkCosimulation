@@ -1,0 +1,29 @@
+JP_handsOn00_liveEditor_demo;
+JP_handsOn01_launchRR;
+JP_handsOn02_changeParameters;
+JP_handsOn03_simulinkCosimulation;
+JP_handsOn04_sensorSimulaiton;
+if ~isMATLABReleaseOlderThan("R2024b")
+    JP_handsOn04_2_sensorSimulaitonObserver;
+end
+JP_handsOn05_simulationPathFollowing;
+JP_handsOn06_simulationPathFollowing14DoF;
+JP_handsOn06_2_simulationPathFollowing14DoF_CRG;
+JP_handsOn07_simulationPathFollowingMultibody;
+JP_handsOn08_controlComparison;
+JP_handsOn09_EV_FuelEfficiency;
+%%
+EN_handsOn00_liveEditor_demo;
+EN_handsOn01_launchRR;
+EN_handsOn02_changeParameters;
+EN_handsOn03_simulinkCosimulation;
+EN_handsOn04_sensorSimulaiton;
+if ~isMATLABReleaseOlderThan("R2024b")
+    EN_handsOn04_2_sensorSimulaitonObserver;
+end
+EN_handsOn05_simulationPathFollowing;
+EN_handsOn06_simulationPathFollowing14DoF;
+EN_handsOn06_2_simulationPathFollowing14DoF_CRG;
+EN_handsOn07_simulationPathFollowingMultibody;
+EN_handsOn08_controlComparison;
+EN_handsOn09_EV_FuelEfficiency;
