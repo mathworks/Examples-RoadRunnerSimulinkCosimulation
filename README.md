@@ -21,7 +21,7 @@ Below is a description of the main files (prefix "EN_" means English and "JP_" m
 - **handsOn04_2_sensorSimulaitonObserver.mlx**: Obtain and visualize data from each sensor model using Observer (R2024b or later). The vehicle moves as designed in RoadRunner Scenario while sensor data is collected.  
 - **handsOn05_simulaitonPathFollowing.mlx**: Use the RoadRunner ScenarioReader block to obtain speed and trajectory information, and then experience a Simulink model in which the vehicle follows the created trajectory. Also try the mode where a bicycle vehicle dynamics model is controlled by Stanley control, and compare the difference in each trajectory.
 - **handsOn06_simulaitonPathFollowing14DoF.mlx**: Use the RoadRunner ScenarioReader to obtain speed and trajectory information, and then experience a Simulink model in which the vehicle follows the cretaed trajectory. Also try the mode where a 14 DOF full vehicle model (6 DOF for the vehicle body + 2  DOF × 4 tires) is controlled by Stanley control, and compare the difference in each trajectory. Compare in a scene and scenario that enables you to see effects such as tire saturation and road gradients, which cannot be represetnted by a bicycle model.
-- **handsOn06_2_handsOn06_2_simulaitonPathFollowing14DoF_CRG**: similar example to "handsOn06_simulaitonPathFollowing14DoF.mlx" but not 2D Look up table but CRG file is used for ground height reading
+- **handsOn06_2_simulaitonPathFollowing14DoF_CRG**: similar example to "handsOn06_simulaitonPathFollowing14DoF.mlx" but not 2D Look up table but CRG file is used for ground height reading
 - **handsOn07_simulaitonPathFollowingMultibody.mlx**: Use the RoadRunner ScenarioReader to obtain speed and trajectory information, and then experience a Simulink model in which the vehicle follows the cretaed trajectory. This is a sample that uses a Simscape Multibody model for vehicle dynamics.
 - **handsOn08_handsOn08_controlComparison.mlx**: Use the RoadRunner ScenarioReader to obtain speed and trajectory information, and compares trajectory tracking using Stanley control and Model Predictive Control.
 - **handsOn09_handsOn09_eV_FuelEfficiency.mlx**: Sample that retrieves the reference trajectory and reference speed from RoadRunner and simulates the powertrain. Visualizes EV energy consumption (equivalent fuel economy for gasoline vehicles), torque, and other parameters.
@@ -39,7 +39,7 @@ In such cases, please remove the HTTP_PROXY/HTTPS_PROXY environment variable set
  
 ### Product Configuration (https://www.mathworks.com)
 Tested with MATLAB R2024b and RoadRunner R2024b.  
-MATLAB and RoadRunner versions must match. If you have installed different versions, please align them.
+MATLAB and RoadRunner versions must match. If you have installed different versions, please align them.(Minor updates such as Update 1 may differ without issue.)
 - MATLAB
 - Simulink
 - Automated Driving Toolbox&trade;
@@ -111,8 +111,8 @@ To Run:
 --->
 
 ### 製品構成 (https://www.mathworks.com)
-MATLAB R2024b、RoadRunner R2024b(Update1以降)でテストしています。
-MATLABとRoadRunnerのversionは揃える必要があるため、異なるversionをインストールしている方はversionを揃えてください。
+MATLAB R2024a、RoadRunner R2024a以降のversionでテストしています。
+MATLABとRoadRunnerのversionは揃える必要があります。「MATLAB R2024bとRoadRunner R2024b」のように両アプリで同じversionをお使いください。(Update1などマイナーアップデートは異なっていても問題ありません。)
 - MATLAB
 - Simulink
 - Automated Driving Toolbox;

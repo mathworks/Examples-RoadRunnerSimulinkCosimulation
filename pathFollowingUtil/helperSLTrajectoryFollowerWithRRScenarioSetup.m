@@ -57,7 +57,7 @@ end
 
 %% Path following controller parameters
 PredictionHorizon = 10;
-assignin('base','tau',             0.5);     % Time constant for longitudinal dynamics 1/s/(tau*s+1)
+assignin('base','tau',             0.5);     % Longitudinal time constant (brake)             (N/A)
 assignin('base','time_gap',        1.5);     % Time gap               (s)
 assignin('base','default_spacing', 10);      % Default spacing        (m)
 assignin('base','max_ac',          3);       % Maximum acceleration   (m/s^2)
@@ -66,7 +66,7 @@ assignin('base','max_steer',       0.26);    % Maximum steering       (rad)
 assignin('base','min_steer',       -0.26);   % Minimum steering       (rad) 
 assignin('base','PredictionHorizon', PredictionHorizon);    % Prediction horizon     
 assignin('base','v0_ego', 0);                % Initial longitudinal velocity (m/s)
-assignin('base','tau2', 0.07);               % Longitudinal time constant (brake)             (N/A)
+assignin('base','tau2', 0.07);               % Time constant for lateral dynamics 1/s/(tau*s+1)
 assignin('base','max_dc', 10);               % Maximum deceleration   (m/s^2)
 assignin('base','control_timeStep', 0.1);    % control time step (s)
 
