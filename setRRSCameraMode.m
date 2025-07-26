@@ -36,13 +36,13 @@ if mode == "follow"
     rrCmdSetFront = rrCmdBase + """SetCameraMode(follow_mode.focus_actor_id='"+string(opt.actorID)+"'"...
         + " follow_mode.height='"+string(opt.height)+"'"...
         + " follow_mode.distance='"+string(opt.distance)+"'"...
-        + ")\""";
+        + ")""";
 elseif mode == "orbit"
-    rrCmdSetFront = rrCmdBase + """SetCameraMode(orbit_mode.focus_actor_id='"+string(opt.actorID)+"')\""";
+    rrCmdSetFront = rrCmdBase + """SetCameraMode(orbit_mode.focus_actor_id='"+string(opt.actorID)+"')""";
 elseif mode == "front"
-    rrCmdSetFront = rrCmdBase + """SetCameraMode(front_mode.focus_actor_id='"+string(opt.actorID)+"')\""";
+    rrCmdSetFront = rrCmdBase + """SetCameraMode(front_mode.focus_actor_id='"+string(opt.actorID)+"')""";
 elseif mode == "default"
-    rrCmdSetFront = rrCmdBase + """SetCameraMode(default_mode)\""";
+    rrCmdSetFront = rrCmdBase + """SetCameraMode(default mode)""";
 end
 % カメラを変更
 system(rrCmdSetFront);
