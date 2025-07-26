@@ -13,9 +13,22 @@ if isMATLABReleaseOlderThan("R2024b")
     warning("camera mode setting is enabled in R2024b or newer.");
     return;
 end
+rrInstallPath = rrApp.InstallationFolder;
 
+os = computer();
+if startsWith(os, 'PC') %windows
+    if ~endsWith(rrInstallPath, "bin\win64")
+        rrInstallPath = rrInstallPath + "/bin/win64";
+    end
+    cmd_raw = "CmdRoadRunnerApi.exe";
+else %ubuntu
+    if ~endsWith(rrInstallPath, "bin/glnxa64")
+        rrInstallPath = rrInstallPath + "/bin/glnxa64";
+    end
+    cmd_raw = "CmdRoadRunnerApi";
+end
 %コマンド
-rrCmd = strcat('"',fullfile(rrApp.InstallationFolder, "CmdRoadRunnerApi.exe"),'"');
+rrCmd = strcat('"',fullfile(rrInstallPath, cmd_raw),'"');
 rrCmdBase = rrCmd + " --serverAddress localhost:" + string(rrApp.getAPIPort()) + " ";
 
 % カメラをFollowに変更するコマンド
